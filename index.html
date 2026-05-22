@@ -1,1 +1,1171 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dino Math Adventure - ดินแดนผจญภัยคณิตศาสตร์ตัวน้อย</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Mitr:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Fredoka', 'Mitr', sans-serif;
+            background: linear-gradient(to bottom, #f0fdf4, #ccfbf1);
+            overflow-x: hidden;
+        }
+        /* เอฟเฟกต์แอนิเมชันความน่ารักสำหรับเด็ก */
+        .bounce-gentle {
+            animation: bounceGentle 2s infinite ease-in-out;
+        }
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .shake-element {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .pop-correct {
+            animation: popCorrect 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popCorrect {
+            0% { transform: scale(0.7); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        /* เมฆลอยตกแต่งหลังบ้าน */
+        .floating-cloud {
+            position: absolute;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .cloud-1 { top: 6%; left: -8%; animation: floatCloud 32s linear infinite; }
+        .cloud-2 { top: 25%; right: -12%; animation: floatCloudReverse 36s linear infinite; }
+        .cloud-3 { bottom: 10%; left: -15%; animation: floatCloud 42s linear infinite; }
 
+        @keyframes floatCloud {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(110vw); }
+        }
+        @keyframes floatCloudReverse {
+            0% { transform: translateX(100px); }
+            100% { transform: translateX(-110vw); }
+        }
+        /* ซ่อนแถบเลื่อนแนวตั้งเพื่อคงความคลีน */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(13, 148, 136, 0.3);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-3 relative select-none">
+
+    <div class="floating-cloud cloud-1 text-sky-200">
+        <svg class="w-28 h-16" fill="currentColor" viewBox="0 0 100 100"><path d="M20 50 a15 15 0 0 1 30 0 a15 15 0 0 1 30 0 a15 15 0 0 1 10 0 a10 10 0 0 1 10 10 a10 10 0 0 1 -10 10 h-70 a10 10 0 0 1 -10 -10 a10 10 0 0 1 10 -10 z"/></svg>
+    </div>
+    <div class="floating-cloud cloud-2 text-sky-200">
+        <svg class="w-40 h-24" fill="currentColor" viewBox="0 0 100 100"><path d="M20 50 a15 15 0 0 1 30 0 a15 15 0 0 1 30 0 a15 15 0 0 1 10 0 a10 10 0 0 1 10 10 a10 10 0 0 1 -10 10 h-70 a10 10 0 0 1 -10 -10 a10 10 0 0 1 10 -10 z"/></svg>
+    </div>
+    <div class="floating-cloud cloud-3 text-sky-200">
+        <svg class="w-24 h-14" fill="currentColor" viewBox="0 0 100 100"><path d="M20 50 a15 15 0 0 1 30 0 a15 15 0 0 1 30 0 a15 15 0 0 1 10 0 a10 10 0 0 1 10 10 a10 10 0 0 1 -10 10 h-70 a10 10 0 0 1 -10 -10 a10 10 0 0 1 10 -10 z"/></svg>
+    </div>
+
+    <header class="w-full max-w-xl flex justify-between items-center z-10 my-1 px-1">
+        <div class="flex items-center gap-2">
+            <span class="text-3.5xl bounce-gentle">🦕</span>
+            <h1 class="text-xl md:text-2xl font-extrabold text-teal-600 drop-shadow-sm">Dino Math Adventure</h1>
+        </div>
+        <div class="flex gap-2">
+            <!-- ปุ่มสลับดนตรีประกอบ -->
+            <button id="toggle-music" class="bg-white hover:bg-rose-100 text-rose-500 font-bold p-2 rounded-full shadow-md border-2 border-rose-300 transition duration-300 focus:outline-none flex items-center justify-center w-10 h-10" title="เปิด/ปิดดนตรีประกอบ">
+                <svg id="music-on-icon" class="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                <svg id="music-off-icon" class="w-5.5 h-5.5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" opacity="0.4"/></svg>
+            </button>
+            <!-- ปุ่มสลับเสียงเอฟเฟกต์ -->
+            <button id="toggle-sound" class="bg-white hover:bg-amber-100 text-amber-500 font-bold p-2 rounded-full shadow-md border-2 border-amber-300 transition duration-300 focus:outline-none flex items-center justify-center w-10 h-10" title="เปิด/ปิดเสียงเอฟเฟกต์">
+                <svg id="sound-on-icon" class="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"/></svg>
+                <svg id="sound-off-icon" class="w-5.5 h-5.5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Canvas สำหรับพลุเฉลิมฉลอง -->
+    <canvas id="confetti-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-50"></canvas>
+
+    <main class="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-3xl p-4 md:p-6 shadow-xl border-4 border-teal-300/60 z-10 flex-grow flex flex-col justify-center min-h-[520px]">
+
+        <!-- ================= 1. แผนที่เลือกด่านหลักแยกเป็น 3 หมวดหมู่ ================= -->
+        <div id="start-screen" class="space-y-4 flex flex-col justify-center items-center py-1">
+            <div class="text-center space-y-1">
+                <div class="bounce-gentle inline-block text-5xl my-1">🗺️🦕</div>
+                <h2 class="text-2xl font-extrabold text-amber-500">เกาะผจญภัยคณิตศาสตร์</h2>
+                <p class="text-emerald-600 font-bold text-xs md:text-sm">สะสมดาวทองคำล้ำค่าและสนุกกับการเรียนรู้กันเถอะ!</p>
+            </div>
+
+            <!-- เมนูสลับโหมดการคำนวณ (Tabs) -->
+            <div class="w-full grid grid-cols-3 gap-2 bg-teal-50 p-1.5 rounded-2xl border border-teal-200 shadow-inner">
+                <button onclick="switchCategory('add')" id="tab-add" class="py-2.5 px-1 rounded-xl text-xs md:text-sm font-extrabold flex flex-col items-center gap-0.5 transition-all shadow-md bg-gradient-to-r from-emerald-400 to-teal-500 text-white">
+                    <span class="text-lg">➕</span>
+                    <span>บวกเลข (10)</span>
+                </button>
+                <button onclick="switchCategory('sub')" id="tab-sub" class="py-2.5 px-1 rounded-xl text-xs md:text-sm font-extrabold flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-teal-600">
+                    <span class="text-lg">➖</span>
+                    <span>ลบเลข (10)</span>
+                </button>
+                <button onclick="switchCategory('mix')" id="tab-mix" class="py-2.5 px-1 rounded-xl text-xs md:text-sm font-extrabold flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-teal-600">
+                    <span class="text-lg">🔀</span>
+                    <span>แบบผสม (10)</span>
+                </button>
+            </div>
+
+            <!-- ป้ายแสดงคะแนนสะสมดวงดาวของโหมดปัจจุบัน -->
+            <div class="bg-amber-100/70 border border-amber-200 px-4 py-1.5 rounded-full text-amber-700 font-extrabold text-xs md:text-sm flex items-center gap-1.5 shadow-sm">
+                <span>ดาวสะสมในหมวดนี้:</span>
+                <span class="text-base" id="total-stars-badge">⭐ 0/30</span>
+            </div>
+
+            <!-- กล่องแสดงรายการเลเวล 10 ด่านในหมวดหมู่ที่เลือก -->
+            <div id="levels-map-container" class="w-full space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
+                <!-- รายการด่านจะเรนเดอร์ไดนามิกผ่าน JS -->
+            </div>
+
+            <!-- เมนูรีเซ็ตคะแนนด้านล่างสุด -->
+            <div class="w-full pt-1 flex justify-center items-center text-xs text-slate-400 font-medium">
+                <button onclick="showResetDialog()" class="text-rose-400 hover:text-rose-600 transition flex items-center gap-0.5">
+                    🔄 รีเซ็ตบันทึกคะแนนทั้งหมด
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= 2. หน้าจอเล่นเกมหลัก (Interactive Game Screen) ================= -->
+        <div id="game-screen" class="hidden space-y-4">
+            <!-- ส่วนบน: แสดงระดับและจำนวนข้อ -->
+            <div class="flex justify-between items-center text-gray-600 font-bold px-1 gap-2">
+                <div class="flex items-center gap-1 bg-teal-100 px-3 py-1.5 rounded-full text-teal-700 text-xs md:text-sm border border-teal-300 max-w-[65%]">
+                    <span id="current-stage-title" class="truncate font-extrabold">ด่านที่ 1</span>
+                </div>
+                <div class="flex items-center gap-1 bg-emerald-100 px-3 py-1.5 rounded-full text-emerald-600 text-xs md:text-sm border border-emerald-300 whitespace-nowrap">
+                    <span>ข้อที่:</span>
+                    <span id="question-index" class="text-base font-extrabold text-emerald-700">1</span>
+                    <span>/</span>
+                    <span id="total-questions-limit" class="text-base font-extrabold text-emerald-700">5</span>
+                </div>
+            </div>
+
+            <!-- แถบประเมินความคืบหน้า (Progress Bar) -->
+            <div class="w-full bg-gray-200 h-3 rounded-full overflow-hidden border border-gray-300/60 shadow-inner">
+                <div id="progress-fill" class="bg-gradient-to-r from-emerald-400 to-teal-500 h-full transition-all duration-300" style="width: 20%;"></div>
+            </div>
+
+            <!-- โซนกระดานดำคำถาม และพื้นที่ตัวช่วยการนับ (Dynamic Visual Aid) -->
+            <div class="bg-rose-50/80 rounded-2.5xl p-4 border-2 border-rose-200 shadow-inner space-y-2.5 relative min-h-[220px] flex flex-col justify-between items-center overflow-hidden">
+                <!-- มาสคอตไดโนเสาร์ข้างสนาม -->
+                <div class="absolute right-1 bottom-1 text-4.5xl md:text-5.5xl select-none filter drop-shadow opacity-95 transition-transform duration-300" id="dino-mascot">
+                    🦖
+                </div>
+
+                <!-- โจทย์เลขสัญลักษณ์เด่นชัดเจน -->
+                <div id="equation-text" class="text-4xl md:text-5xl font-extrabold text-slate-700 tracking-wide text-center pt-2">
+                    2 + 1 = ?
+                </div>
+
+                <!-- ผู้ช่วยสอน (Visual Counter Helper Area) รองรับหลักสิบสำหรับเลขที่ยากขึ้น -->
+                <div class="w-full flex flex-col items-center justify-center space-y-1.5 mt-2">
+                    <p class="text-[11px] md:text-xs text-rose-500 font-extrabold bg-white px-3 py-0.5 rounded-full border border-rose-100 shadow-xs">
+                        💡 พี่ไดโนช่วยนับผลแอปเปิ้ลสีแดง:
+                    </p>
+                    <div id="visual-helper-box" class="flex flex-wrap items-center justify-center gap-2 py-1.5 min-h-[76px] w-full max-w-md">
+                        <!-- แอปเปิ้ลและกล่องบรรจุ 10 จะเรนเดอร์ที่นี่ -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ปุ่มตัวเลือกคำตอบ 4 ช่องดึงดูดสายตา -->
+            <div class="space-y-1.5">
+                <p class="text-center font-bold text-gray-500 text-xs">👇 แตะจิ้มตัวเลขที่เป็นคำตอบที่ถูกต้อง:</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="checkAnswer(this)" class="answer-btn bg-gradient-to-br from-yellow-300 to-amber-400 text-amber-950 font-extrabold text-2.5xl py-3 rounded-2xl shadow-md border-b-6 border-amber-600 hover:-translate-y-0.5 active:translate-y-0.5 transition-all">1</button>
+                    <button onclick="checkAnswer(this)" class="answer-btn bg-gradient-to-br from-purple-300 to-violet-400 text-violet-950 font-extrabold text-2.5xl py-3 rounded-2xl shadow-md border-b-6 border-violet-600 hover:-translate-y-0.5 active:translate-y-0.5 transition-all">2</button>
+                    <button onclick="checkAnswer(this)" class="answer-btn bg-gradient-to-br from-emerald-300 to-teal-400 text-teal-950 font-extrabold text-2.5xl py-3 rounded-2xl shadow-md border-b-6 border-teal-600 hover:-translate-y-0.5 active:translate-y-0.5 transition-all">3</button>
+                    <button onclick="checkAnswer(this)" class="answer-btn bg-gradient-to-br from-sky-300 to-indigo-400 text-indigo-950 font-extrabold text-2.5xl py-3 rounded-2xl shadow-md border-b-6 border-indigo-600 hover:-translate-y-0.5 active:translate-y-0.5 transition-all">4</button>
+                </div>
+            </div>
+
+            <!-- ปุ่มกลับแผนที่ -->
+            <div class="flex justify-center pt-1">
+                <button onclick="exitToMainMenu()" class="text-gray-400 hover:text-gray-600 text-xs md:text-sm font-bold flex items-center gap-1 transition">
+                    🗺️ กลับสู่แผนที่ผจญภัย
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= 3. หน้าจอสรุปด่านรางวัล (Level Complete Screen) ================= -->
+        <div id="gameover-screen" class="hidden space-y-4 flex flex-col justify-center items-center py-2 text-center">
+            <div class="space-y-0.5">
+                <div class="bounce-gentle inline-block text-6.5xl my-1" id="victory-emoji">⭐🏆⭐</div>
+                <h2 class="text-2.5xl font-extrabold text-emerald-500" id="victory-title">สำเร็จเรียบร้อย!</h2>
+                <p class="text-amber-500 font-extrabold text-base" id="victory-subtitle">แสนเก่งและรอบรู้มากเลยจ้า!</p>
+            </div>
+
+            <!-- ผลการนับแต้มดาวสะสม -->
+            <div class="bg-amber-50/70 border-2 border-amber-200 rounded-2.5xl p-4.5 w-full text-center space-y-3 shadow-xs">
+                <div class="text-slate-500 font-extrabold text-xs uppercase tracking-wider">คะแนนในด่านล่าสุด</div>
+                <div class="text-4.5xl font-extrabold text-pink-500" id="final-score-val">5 / 5</div>
+                
+                <div class="flex justify-center gap-2 text-3.5xl" id="star-rewards">
+                    ⭐ ⭐ ⭐
+                </div>
+                
+                <p class="text-xs md:text-sm font-bold text-gray-600 px-1" id="motivational-speech">สุดยอดอัจฉริยะวิชาคณิตศาสตร์!</p>
+            </div>
+
+            <!-- ปุ่มควบคุมหลังจบด่าน -->
+            <div class="w-full space-y-2">
+                <button id="btn-next-level" onclick="playNextLevel()" class="w-full bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white font-extrabold text-xl py-3.5 rounded-2xl shadow-lg border-b-6 border-orange-600 hover:-translate-y-0.5 transition-all active:translate-y-0.5">
+                    ➡️ เดินทางต่อไปยังด่านหน้า!
+                </button>
+                <button onclick="restartLevel()" class="w-full bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-extrabold text-lg py-3 rounded-2xl shadow-md border-b-4 border-emerald-600 hover:-translate-y-0.5 transition-all active:translate-y-0.5">
+                    🔄 ลองเล่นใหม่อีกสักรอบนะจ๊ะ
+                </button>
+                <button onclick="exitToMainMenu()" class="w-full bg-white hover:bg-gray-50 text-amber-500 font-bold py-2.5 rounded-xl shadow-xs border-2 border-amber-300 transition-all text-sm">
+                    🗺️ กลับไปยังแผนที่ผจญภัย
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= 4. ป๊อปอัปยืนยันการลบคะแนนแบบน่ารัก (Inline Custom Modal) ================= -->
+    <div id="reset-confirm-dialog" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden transition-opacity">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full border-4 border-pink-300 shadow-2xl text-center space-y-4 pop-correct">
+            <div class="text-5xl">🦖💦</div>
+            <h3 class="text-xl font-extrabold text-slate-800">ยืนยันการลบประวัติ?</h3>
+            <p class="text-slate-500 text-xs md:text-sm font-bold">ดาวสีทองและการปลดล็อกด่านทั้งหมดที่คุณทำไว้จะเริ่มจาก 0 ใหม่ทั้งหมดเลยนะจ๊ะคุณหนู ๆ!</p>
+            <div class="flex gap-3 pt-2">
+                <button onclick="hideResetDialog()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl border border-slate-300 transition-all text-sm">
+                    ❌ ปิดหน้าต่างนี้
+                </button>
+                <button onclick="executeResetProgress()" class="flex-1 bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 text-white font-extrabold py-2.5 rounded-xl shadow-md border-b-4 border-pink-700 transition-all text-sm">
+                    🔥 ยืนยันรีเซ็ต!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ลิขสิทธิ์ Footer -->
+    <footer class="w-full max-w-xl text-center py-3 text-slate-400 font-bold text-[10px] md:text-xs z-10 flex flex-col items-center gap-2">
+        <div class="text-rose-600 font-extrabold text-[13px] md:text-sm bg-rose-100/90 px-4 py-1.5 rounded-full border-2 border-rose-300 shadow-sm">
+            ❤️ เกมส์สำหรับเสริมพัฒนาการเด็กแจกฟรีห้ามซื้อขาย ❤️
+        </div>
+        <span>🦕 Dino Math Adventure © 2026 • 30 ด่านระดับพัฒนาการสำหรับเด็กปฐมวัย 🧸</span>
+    </footer>
+
+    <script>
+        // ระบบสังเคราะห์เสียงสไตล์ 8-Bit Chiptune มาริโอ้แสนซุกซน
+        let isSoundEnabled = true;
+        let isMusicEnabled = true; 
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // โครงสร้างคอร์ด (C Major -> F Major -> G Major -> C Major)
+        const bgmChords = [
+            { bass: [130.81, 196.00], melody: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25] },
+            { bass: [174.61, 261.63], melody: [349.23, 392.00, 440.00, 523.25, 587.33, 698.46] },
+            { bass: [196.00, 293.66], melody: [392.00, 440.00, 493.88, 587.33, 659.25, 783.99] },
+            { bass: [130.81, 196.00], melody: [523.25, 440.00, 392.00, 329.63, 293.66, 261.63] }
+        ];
+
+        let bgmBeat = 0;
+        let bgmTimer = null;
+
+        function playSynthTone(freq, type, volume, duration) {
+            if (!isMusicEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log("AudioContext play error:", e);
+            }
+        }
+
+        function playDrumTick(volume, isSnare = false) {
+            if (!isMusicEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'triangle';
+                const startFreq = isSnare ? 1200 : 9000;
+                const endFreq = isSnare ? 90 : 200;
+                
+                osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + 0.05);
+                
+                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.06);
+            } catch (e) {
+                console.log("Audio drum error:", e);
+            }
+        }
+
+        function playBgmBeat() {
+            if (!isMusicEnabled) return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const chordIndex = Math.floor(bgmBeat / 8) % bgmChords.length;
+            const step = bgmBeat % 8;
+            const currentChord = bgmChords[chordIndex];
+
+            try {
+                // จังหวะเบสคู่สลับ
+                if (step === 0 || step === 4) {
+                    playSynthTone(currentChord.bass[0], 'triangle', 0.05, 0.22);
+                } else if (step === 2 || step === 6) {
+                    playSynthTone(currentChord.bass[1], 'triangle', 0.05, 0.22);
+                }
+
+                // สแนร์และเครื่องเคาะตบจังหวะ
+                if (step === 1 || step === 3 || step === 5 || step === 7) {
+                    playDrumTick(0.005, false);
+                }
+                if (step === 4) {
+                    playDrumTick(0.012, true);
+                }
+
+                // ไล่ทำนอง Chiptune คิวท์ ๆ
+                const melodyPattern = [0, 2, 1, 3, 2, 4, 3, 5];
+                const playMelodySteps = [0, 1, 2, 3, 5, 6, 7];
+                
+                if (playMelodySteps.includes(step)) {
+                    const noteIndex = melodyPattern[step] % currentChord.melody.length;
+                    const noteFreq = currentChord.melody[noteIndex];
+                    playSynthTone(noteFreq, 'sine', 0.011, 0.15);
+                }
+            } catch (e) {
+                console.log("Play BGM error:", e);
+            }
+
+            bgmBeat++;
+            bgmTimer = setTimeout(playBgmBeat, 260); // จังหวะดนตรีสนุกแบบกึ่งเดินขบวน
+        }
+
+        function toggleBgm(forceState = null) {
+            if (forceState !== null) {
+                isMusicEnabled = forceState;
+            } else {
+                isMusicEnabled = !isMusicEnabled;
+            }
+
+            const musicOn = document.getElementById('music-on-icon');
+            const musicOff = document.getElementById('music-off-icon');
+
+            if (isMusicEnabled) {
+                musicOn.classList.remove('hidden');
+                musicOff.classList.add('hidden');
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                if (!bgmTimer) {
+                    bgmBeat = 0;
+                    playBgmBeat();
+                }
+            } else {
+                musicOn.classList.add('hidden');
+                musicOff.classList.remove('hidden');
+                if (bgmTimer) {
+                    clearTimeout(bgmTimer);
+                    bgmTimer = null;
+                }
+            }
+        }
+
+        function playNote(freq, type, duration, delay = 0) {
+            if (!isSoundEnabled) return;
+            setTimeout(() => {
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + duration);
+                } catch (e) {
+                    console.log("Sound play error:", e);
+                }
+            }, delay * 1000);
+        }
+
+        function playCorrectSound() {
+            playNote(523.25, 'triangle', 0.25, 0);   
+            playNote(659.25, 'triangle', 0.35, 0.08); 
+        }
+
+        function playWrongSound() {
+            playNote(220.00, 'sawtooth', 0.35, 0);   
+            playNote(175.00, 'sawtooth', 0.35, 0.06); 
+        }
+
+        function playVictoryFanfare() {
+            const melody = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00];
+            const durations = [0.1, 0.1, 0.1, 0.12, 0.12, 0.12, 0.45];
+            let accumDelay = 0;
+            for(let i = 0; i < melody.length; i++) {
+                playNote(melody[i], 'sine', durations[i], accumDelay);
+                accumDelay += 0.08;
+            }
+        }
+
+        // คอนโทรลปุ่มปิดเปิดเสียง
+        document.getElementById('toggle-sound').addEventListener('click', () => {
+            isSoundEnabled = !isSoundEnabled;
+            const iconOn = document.getElementById('sound-on-icon');
+            const iconOff = document.getElementById('sound-off-icon');
+            if(isSoundEnabled) {
+                iconOn.classList.remove('hidden');
+                iconOff.classList.add('hidden');
+                playNote(440, 'sine', 0.1);
+            } else {
+                iconOn.classList.add('hidden');
+                iconOff.classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('toggle-music').addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleBgm();
+        });
+
+        document.addEventListener('click', function startBgmOnFirstClick() {
+            if (isMusicEnabled && !bgmTimer) {
+                toggleBgm(true);
+            }
+        }, { once: true });
+
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let confetti = [];
+        let animationFrameId = null;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class ConfettiPiece {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * -canvas.height - 20;
+                this.size = Math.random() * 8 + 5;
+                this.color = `hsl(${Math.random() * 360}, 90%, 65%)`;
+                this.speedX = Math.random() * 4 - 2;
+                this.speedY = Math.random() * 4 + 3;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 4 - 2;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.rotation += this.rotationSpeed;
+                if(this.y > canvas.height) {
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.rotation * Math.PI) / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function spawnConfetti() {
+            confetti = [];
+            for (let i = 0; i < 90; i++) {
+                confetti.push(new ConfettiPiece());
+            }
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            confetti.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            animationFrameId = requestAnimationFrame(animateConfetti);
+        }
+
+        function stopConfetti() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // นิยามระดับด่านผจญภัยอย่างถี่ถ้วน 10 ด่านบวก + 10 ด่านลบ + 10 ด่านผสม
+        const defaultLevels = {
+            add: [
+                { id: 1, name: "บวกด่านที่ 1: ไข่ไดโนเบบี๋ 🥚", desc: "ฝึกนับง่ายที่สุด บวกกันไม่เกิน 4", min: 1, max: 2, limit: 4, qCount: 5, stars: 0, unlocked: true },
+                { id: 2, name: "บวกด่านที่ 2: รังไหมในสวน 🐣", desc: "หัดบวกตัวเลขน้อย ๆ ไม่เกิน 5", min: 1, max: 4, limit: 5, qCount: 5, stars: 0, unlocked: false },
+                { id: 3, name: "บวกด่านที่ 3: เจ้าเต่าน้อยเดินเล่น 🐢", desc: "บวกกันแสนง่าย ไม่เกิน 7", min: 1, max: 5, limit: 7, qCount: 5, stars: 0, unlocked: false },
+                { id: 4, name: "บวกด่านที่ 4: ช้างพ่นน้ำพุ 🐘", desc: "บวกพื้นฐานทั่วไป ไม่เกิน 10", min: 1, max: 8, limit: 10, qCount: 5, stars: 0, unlocked: false },
+                { id: 5, name: "บวกด่านที่ 5: กีวี่แสนหวาน 🥝", desc: "เริ่มบวกเลขข้ามสิบ ไม่เกิน 12", min: 2, max: 10, limit: 12, qCount: 5, stars: 0, unlocked: false },
+                { id: 6, name: "บวกด่านที่ 6: นกฮูกท่องเวลา 🦉", desc: "บวกเลขสนุกใจเย็น ไม่เกิน 15", min: 2, max: 13, limit: 15, qCount: 5, stars: 0, unlocked: false },
+                { id: 7, name: "บวกด่านที่ 7: ภูเขาแร่ทองคำ ⛰️", desc: "บวกจำนวนหลักสิบ ไม่เกิน 20", min: 5, max: 15, limit: 20, qCount: 5, stars: 0, unlocked: false },
+                { id: 8, name: "บวกด่านที่ 8: ราชาคอยาว 🦕", desc: "พัฒนาการคิดวิเคราะห์ ไม่เกิน 30", min: 5, max: 25, limit: 30, qCount: 5, stars: 0, unlocked: false },
+                { id: 9, name: "บวกด่านที่ 9: พลับพลึงผุดผ่อง 🌸", desc: "ท้าทายจังหวะความคิด ไม่เกิน 40", min: 10, max: 30, limit: 40, qCount: 5, stars: 0, unlocked: false },
+                { id: 10, name: "บวกด่านที่ 10: มงกุฎนักคิดเลข 👑", desc: "แชมเปี้ยนบวกเลขปฐมวัย ไม่เกิน 50", min: 10, max: 40, limit: 50, qCount: 5, stars: 0, unlocked: false }
+            ],
+            sub: [
+                { id: 1, name: "ลบด่านที่ 1: ดอกหญ้าสายลม 🌾", desc: "ฝึกลบน้อย ๆ เข้าใจง่ายมาก ไม่เกิน 4", min: 1, max: 3, limit: 4, qCount: 5, stars: 0, unlocked: true },
+                { id: 2, name: "ลบด่านที่ 2: ผีเสื้อขยับปีก 🦋", desc: "หัดเอานิ้วมือช่วยหักลบ ไม่เกิน 5", min: 1, max: 5, limit: 5, qCount: 5, stars: 0, unlocked: false },
+                { id: 3, name: "ลบด่านที่ 3: ลูกไก่กระพือปีก 🐥", desc: "ลบเลขแสนง่ายไม่ปวดขมับ ไม่เกิน 7", min: 1, max: 7, limit: 7, qCount: 5, stars: 0, unlocked: false },
+                { id: 4, name: "ลบด่านที่ 4: ลิงซนปีนต้นไม้ 🐒", desc: "ลบผลไม้พื้นฐาน ไม่เกิน 10", min: 1, max: 10, limit: 10, qCount: 5, stars: 0, unlocked: false },
+                { id: 5, name: "ลบด่านที่ 5: ปลาทองส่ายหาง 🐠", desc: "หักออกอย่างเพลิดเพลิน ไม่เกิน 12", min: 2, max: 12, limit: 12, qCount: 5, stars: 0, unlocked: false },
+                { id: 6, name: "ลบด่านที่ 6: กระรอกช่างเก็บ 🐿️", desc: "ลบเลขอย่างมั่นใจ ไม่เกิน 15", min: 2, max: 15, limit: 15, qCount: 5, stars: 0, unlocked: false },
+                { id: 7, name: "ลบด่านที่ 7: กองไฟค่ายพัก ⛺", desc: "ลบเลขสองหลักระดับต้น ไม่เกิน 20", min: 5, max: 20, limit: 20, qCount: 5, stars: 0, unlocked: false },
+                { id: 8, name: "ลบด่านที่ 8: ราชาสามเขา 🦖", desc: "ท้าทายจินตนาการเลขลบ ไม่เกิน 30", min: 5, max: 30, limit: 30, qCount: 5, stars: 0, unlocked: false },
+                { id: 9, name: "ลบด่านที่ 9: แม่น้ำสายเย็น 🌊", desc: "คิดเลขลบกระฉับกระเฉง ไม่เกิน 40", min: 10, max: 40, limit: 40, qCount: 5, stars: 0, unlocked: false },
+                { id: 10, name: "ลบด่านที่ 10: ราชานักลบเลข 👑", desc: "แชมเปี้ยนลบเลขปฐมวัย ไม่เกิน 50", min: 10, max: 50, limit: 50, qCount: 5, stars: 0, unlocked: false }
+            ],
+            mix: [
+                { id: 1, name: "ผสมด่านที่ 1: ทางสายรุ้ง 🌈", desc: "บวกและลบพื้นฐานสลับกัน ไม่เกิน 5", min: 1, max: 5, limit: 5, qCount: 5, stars: 0, unlocked: true },
+                { id: 2, name: "ผสมด่านที่ 2: เห็ดป่าหรรษา 🍄", desc: "ฝึกฝนความคล่องแคล่ว ไม่เกิน 8", min: 1, max: 8, limit: 8, qCount: 5, stars: 0, unlocked: false },
+                { id: 3, name: "ผสมด่านที่ 3: กระต่ายทุ่งกว้าง 🐇", desc: "ปรับสมองตื่นตัวสลับคิด ไม่เกิน 10", min: 1, max: 10, limit: 10, qCount: 5, stars: 0, unlocked: false },
+                { id: 4, name: "ผสมด่านที่ 4: เจ้าหมีอ้วน 🐻", desc: "บวกลบระดับประถมต้น ไม่เกิน 12", min: 2, max: 12, limit: 12, qCount: 5, stars: 0, unlocked: false },
+                { id: 5, name: "ผสมด่านที่ 5: กังหันสีเหลือง 🎡", desc: "ฝึกสมาธิแน่วแน่ไม่หวั่นไหว ไม่เกิน 15", min: 2, max: 15, limit: 15, qCount: 5, stars: 0, unlocked: false },
+                { id: 6, name: "ผสมด่านที่ 6: เกาะโจรสลัด 🏴‍☠️", desc: "ฝึกโจทย์ที่สุ่มเครื่องหมาย ไม่เกิน 20", min: 5, max: 20, limit: 20, qCount: 5, stars: 0, unlocked: false },
+                { id: 7, name: "ผสมด่านที่ 7: อุกกาบาตสีชมพู 🌠", desc: "สุ่มวิเคราะห์คิดเร็ว ไม่เกิน 25", min: 5, max: 25, limit: 25, qCount: 5, stars: 0, unlocked: false },
+                { id: 8, name: "ผสมด่านที่ 8: ราชาติดปีก 🦕", desc: "โจทย์ท้าทายสับสนนิด ๆ ไม่เกิน 30", min: 5, max: 30, limit: 30, qCount: 5, stars: 0, unlocked: false },
+                { id: 9, name: "ผสมด่านที่ 9: ยอดเขาหิมะ ❄️", desc: "ฝึกทักษะคณิตระดับรวดเร็ว ไม่เกิน 40", min: 10, max: 40, limit: 40, qCount: 5, stars: 0, unlocked: false },
+                { id: 10, name: "ผสมด่านที่ 10: จักรพรรดิไดโน 👑", desc: "ด่านรวมสุดยอดวิชาบวกลบ ไม่เกิน 50", min: 10, max: 50, limit: 50, qCount: 5, stars: 0, unlocked: false }
+            ]
+        };
+
+        let levelsData = {};
+        let activeCategory = 'add'; // ตัวเลือกเริ่มต้น: บวก (add)
+
+        function loadLevelsProgress() {
+            const saved = localStorage.getItem('dino_math_adventure_v3');
+            if (saved) {
+                try {
+                    levelsData = JSON.parse(saved);
+                    // ตรวจทานโครงสร้างหมวดหมู่ใหม่
+                    if (!levelsData.add || !levelsData.sub || !levelsData.mix || levelsData.add.length !== 10) {
+                        levelsData = JSON.parse(JSON.stringify(defaultLevels));
+                    }
+                } catch (e) {
+                    levelsData = JSON.parse(JSON.stringify(defaultLevels));
+                }
+            } else {
+                levelsData = JSON.parse(JSON.stringify(defaultLevels));
+            }
+            saveProgressToLocal();
+        }
+
+        function saveProgressToLocal() {
+            localStorage.setItem('dino_math_adventure_v3', JSON.stringify(levelsData));
+        }
+
+        // แสดง/ซ่อน Modal ยืนยันการรีเซ็ต
+        function showResetDialog() {
+            const dialog = document.getElementById('reset-confirm-dialog');
+            dialog.classList.remove('hidden');
+            playNote(250, 'sine', 0.15);
+        }
+
+        function hideResetDialog() {
+            const dialog = document.getElementById('reset-confirm-dialog');
+            dialog.classList.add('hidden');
+        }
+
+        function executeResetProgress() {
+            levelsData = JSON.parse(JSON.stringify(defaultLevels));
+            saveProgressToLocal();
+            hideResetDialog();
+            renderLevelsMap();
+            playNote(180, 'sawtooth', 0.25);
+        }
+
+        // สลับหมวดหมู่แท็บ (บวก, ลบ, ผสม)
+        function switchCategory(cat) {
+            activeCategory = cat;
+            
+            const tabAdd = document.getElementById('tab-add');
+            const tabSub = document.getElementById('tab-sub');
+            const tabMix = document.getElementById('tab-mix');
+
+            // ลบคลาสแอคทีฟทั้งหมด
+            [tabAdd, tabSub, tabMix].forEach(tab => {
+                tab.className = "py-2.5 px-1 rounded-xl text-xs md:text-sm font-extrabold flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-teal-600";
+            });
+
+            // เพิ่มคลาสแอคทีฟเฉพาะตัวที่เลือก
+            const activeTab = document.getElementById(`tab-${cat}`);
+            activeTab.className = "py-2.5 px-1 rounded-xl text-xs md:text-sm font-extrabold flex flex-col items-center gap-0.5 transition-all shadow-md bg-gradient-to-r from-emerald-400 to-teal-500 text-white";
+
+            playNote(350 + (cat === 'sub' ? 50 : cat === 'mix' ? 100 : 0), 'sine', 0.12);
+            renderLevelsMap();
+        }
+
+        function renderLevelsMap() {
+            const container = document.getElementById('levels-map-container');
+            container.innerHTML = '';
+
+            const currentList = levelsData[activeCategory];
+            let totalStars = 0;
+
+            currentList.forEach((level, index) => {
+                totalStars += level.stars;
+
+                const card = document.createElement('div');
+                let cardClass = "relative flex flex-col md:flex-row items-center justify-between p-3.5 rounded-2.5xl border-3 transition-all ";
+                let buttonHtml = "";
+                let starsHtml = "";
+
+                // ดึงอีโมจิดีไซน์ตามลำดับขั้นความเก่ง
+                const getEmoji = (lvlId) => {
+                    if (activeCategory === 'add') {
+                        return lvlId <= 3 ? '🥚' : lvlId <= 6 ? '🐥' : lvlId <= 9 ? '🍓' : '👑';
+                    } else if (activeCategory === 'sub') {
+                        return lvlId <= 3 ? '🌾' : lvlId <= 6 ? '🦋' : lvlId <= 9 ? '🌊' : '👑';
+                    } else {
+                        return lvlId <= 3 ? '🌈' : lvlId <= 6 ? '🧸' : lvlId <= 9 ? '🌠' : '👑';
+                    }
+                };
+
+                if (level.unlocked) {
+                    cardClass += "bg-emerald-50/90 hover:bg-emerald-100/90 border-emerald-300 text-emerald-950 shadow-xs";
+                    
+                    starsHtml = `<div class="flex gap-0.5 text-base my-0.5 justify-center md:justify-start">`;
+                    for(let i = 0; i < 3; i++) {
+                        if (i < level.stars) {
+                            starsHtml += `<span class="text-amber-400 drop-shadow-xs">⭐</span>`;
+                        } else {
+                            starsHtml += `<span class="text-gray-300">☆</span>`;
+                        }
+                    }
+                    starsHtml += `</div>`;
+
+                    buttonHtml = `
+                        <button onclick="selectLevel(${level.id})" class="mt-1.5 md:mt-0 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-extrabold px-4 py-2 rounded-xl border-b-4 border-emerald-600 active:translate-y-0.5 transition-all text-xs md:text-sm">
+                            🎮 ลุยด่านนี้
+                        </button>
+                    `;
+                } else {
+                    cardClass += "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed select-none";
+                    starsHtml = `<div class="text-[10px] font-bold text-gray-400 flex items-center justify-center md:justify-start gap-1 my-0.5">🔒 ต้องผ่านด่านก่อนหน้า</div>`;
+                    buttonHtml = `
+                        <button disabled class="mt-1.5 md:mt-0 bg-gray-300 text-gray-500 font-bold px-4 py-2 rounded-xl border-b-4 border-gray-400 cursor-not-allowed text-xs">
+                            🔒 ล็อก
+                        </button>
+                    `;
+                }
+
+                card.className = cardClass;
+                card.innerHTML = `
+                    <div class="flex items-center gap-2.5 w-full md:w-auto text-center md:text-left flex-col md:flex-row">
+                        <div class="text-2.5xl p-2 bg-white rounded-xl shadow-xs border-2 ${level.unlocked ? 'border-emerald-200' : 'border-gray-200'}">
+                            ${getEmoji(level.id)}
+                        </div>
+                        <div class="space-y-0.5">
+                            <h3 class="font-extrabold text-sm md:text-base text-slate-800 ${!level.unlocked && 'opacity-60'}">${level.name}</h3>
+                            <p class="text-[11px] md:text-xs text-slate-500 font-medium">${level.desc}</p>
+                            ${starsHtml}
+                        </div>
+                    </div>
+                    <div class="w-full md:w-auto flex justify-center mt-1 md:mt-0">
+                        ${buttonHtml}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            // ปลุกคะแนนความคืบหน้าภาพรวม
+            document.getElementById('total-stars-badge').innerText = `⭐ ${totalStars} / 30`;
+        }
+
+        let activeLevel = null;
+        let currentQuestionNum = 1;
+        let score = 0;
+        let correctAnswerVal = 0;
+        let answersArray = [];
+        let num1 = 0;
+        let num2 = 0;
+        let selectedOperator = '+';
+        let askedQuestionsList = []; // เก็บประวัติโจทย์ที่สุ่มออกมาแล้วในรอบนั้นเพื่อไม่ให้ซ้ำกัน
+
+        const dinoMascot = document.getElementById('dino-mascot');
+        const dinoStates = {
+            thinking: '🦖',
+            correct: '🦖✨💖',
+            wrong: '🦕💦❔',
+            happy: '🦖🎉👑'
+        };
+
+        function setDinoState(state) {
+            dinoMascot.innerHTML = dinoStates[state] || dinoStates.thinking;
+            if (state === 'correct') {
+                dinoMascot.classList.add('scale-115');
+                setTimeout(() => dinoMascot.classList.remove('scale-115'), 500);
+            } else if (state === 'wrong') {
+                dinoMascot.classList.add('shake-element');
+                setTimeout(() => dinoMascot.classList.remove('shake-element'), 500);
+            }
+        }
+
+        function selectLevel(levelId) {
+            const currentList = levelsData[activeCategory];
+            activeLevel = currentList.find(lvl => lvl.id === levelId);
+            if (!activeLevel || !activeLevel.unlocked) return;
+
+            currentQuestionNum = 1;
+            score = 0;
+            askedQuestionsList = []; // รีเซ็ตประวัติโจทย์เก่าเมื่อเริ่มเข้าเล่นด่านใหม่
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('gameover-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            document.getElementById('current-stage-title').innerText = activeLevel.name;
+            document.getElementById('total-questions-limit').innerText = activeLevel.qCount;
+
+            setDinoState('thinking');
+            generateNewQuestion();
+            playNote(400, 'sine', 0.12);
+        }
+
+        function exitToMainMenu() {
+            stopConfetti();
+            activeLevel = null;
+            document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('gameover-screen').classList.add('hidden');
+            renderLevelsMap();
+            playNote(300, 'sine', 0.1);
+        }
+
+        function restartLevel() {
+            stopConfetti();
+            if (activeLevel) {
+                selectLevel(activeLevel.id);
+            }
+        }
+
+        function playNextLevel() {
+            stopConfetti();
+            if (activeLevel) {
+                const nextId = activeLevel.id + 1;
+                const currentList = levelsData[activeCategory];
+                const nextLevel = currentList.find(lvl => lvl.id === nextId);
+                if (nextLevel && nextLevel.unlocked) {
+                    selectLevel(nextId);
+                } else {
+                    exitToMainMenu();
+                }
+            }
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateNewQuestion() {
+            if (!activeLevel) return;
+
+            const min = activeLevel.min;
+            const max = activeLevel.max;
+            const limit = activeLevel.limit;
+
+            // กำหนดทิศทางวิชาเลข
+            if (activeCategory === 'mix') {
+                selectedOperator = Math.random() < 0.5 ? '+' : '-';
+            } else if (activeCategory === 'add') {
+                selectedOperator = '+';
+            } else {
+                selectedOperator = '-';
+            }
+
+            let attempts = 0;
+            let questionKey = "";
+
+            // วนลูปสุ่มตัวเลขใหม่จนกว่าจะได้โจทย์ที่ไม่ซ้ำกับประวัติในรอบนี้ (หรือเกิน 100 ครั้งเพื่อความปลอดภัย)
+            do {
+                if (selectedOperator === '+') {
+                    // บวกห้ามผลรวมทะลุขอบเขตด่าน
+                    num1 = getRandomInt(min, limit - 1);
+                    const maxNum2 = limit - num1;
+                    num2 = getRandomInt(min, maxNum2 > 0 ? maxNum2 : 1);
+                    correctAnswerVal = num1 + num2;
+                } else {
+                    // ลบตัวตั้งต้องมากกว่าเสมอและไม่เป็นลบ
+                    num1 = getRandomInt(min + 1, limit);
+                    num2 = getRandomInt(min, num1 - 1); 
+                    correctAnswerVal = num1 - num2;
+                }
+                questionKey = `${num1}${selectedOperator}${num2}`;
+                attempts++;
+            } while (askedQuestionsList.includes(questionKey) && attempts < 100);
+
+            // บันทึกคำถามนี้ลงประวัติของด่านนี้
+            askedQuestionsList.push(questionKey);
+
+            // แสดงคำถามบนป้ายกระดานดำ
+            document.getElementById('equation-text').innerText = `${num1} ${selectedOperator} ${num2} = ?`;
+
+            // บันดาลตัวเลือกคำตอบ 4 ช่อง
+            generateAnswersArray();
+
+            // วาดตัวช่วยสอนนับแอปเปิ้ลแบบกลุ่ม 10
+            renderVisualHelper(num1, num2, selectedOperator);
+
+            document.getElementById('question-index').innerText = currentQuestionNum;
+            const progressPercent = (currentQuestionNum / activeLevel.qCount) * 100;
+            document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+
+            setDinoState('thinking');
+        }
+
+        function generateAnswersArray() {
+            let tempSet = new Set();
+            tempSet.add(correctAnswerVal);
+
+            // คำนวณขอบเขตตัวเลือกหลอกไม่ให้โด่งเกินไป
+            let maxFakeLimit = 5;
+            if (activeLevel.limit <= 5) maxFakeLimit = 6;
+            else if (activeLevel.limit <= 10) maxFakeLimit = 12;
+            else if (activeLevel.limit <= 20) maxFakeLimit = 24;
+            else maxFakeLimit = activeLevel.limit + 6;
+
+            while (tempSet.size < 4) {
+                let fakeAnswer = getRandomInt(1, maxFakeLimit);
+                if (fakeAnswer !== correctAnswerVal) {
+                    tempSet.add(fakeAnswer);
+                }
+            }
+
+            answersArray = Array.from(tempSet).sort(() => Math.random() - 0.5);
+
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons.forEach((btn, index) => {
+                btn.innerText = answersArray[index];
+                btn.disabled = false;
+                
+                // รีเซ็ตคลาสสี
+                btn.className = btn.className.replace(/from-\S+ to-\S+/g, '');
+                btn.className = btn.className.replace(/border-\S+/g, '');
+                
+                const colorPresets = [
+                    'from-yellow-300 to-amber-400 border-amber-600 text-amber-950',
+                    'from-purple-300 to-violet-400 border-violet-600 text-violet-950',
+                    'from-emerald-300 to-teal-400 border-teal-600 text-teal-950',
+                    'from-sky-300 to-indigo-400 border-indigo-600 text-indigo-950'
+                ];
+                btn.classList.add(...colorPresets[index].split(' '));
+            });
+        }
+
+        // ฟังก์ชันวาดกลุ่มผลไม้อเนกประสงค์เพื่อช่วยคุณครู/ผู้ปกครองอธิบายเรื่องหลักสิบหลักหน่วย
+        function renderVisualHelper(n1, n2, op) {
+            const helperBox = document.getElementById('visual-helper-box');
+            helperBox.innerHTML = '';
+
+            // กำหนดสไตล์การย่อ/ขยายแอปเปิ้ลตามจำนวนปริมาณที่วาดเพื่อป้องกันปัญหากล่องล้นจอ
+            let appleSizeClass = 'w-7 h-7';
+            if (n1 + n2 > 20) {
+                appleSizeClass = 'w-4.5 h-4.5';
+            } else if (n1 + n2 > 10) {
+                appleSizeClass = 'w-5.5 h-5.5';
+            }
+
+            function createAppleSVG(isCrossedOut = false) {
+                const wrapper = document.createElement('div');
+                wrapper.className = `relative ${appleSizeClass} flex items-center justify-center pop-correct`;
+
+                const appleHtml = `
+                    <svg viewBox="0 0 100 100" class="w-full h-full filter drop-shadow-xs">
+                        <path d="M50 20 C60 5, 65 15, 55 25 Z" fill="#22c55e" />
+                        <rect x="48" y="15" width="4" height="12" rx="2" fill="#78350f" />
+                        <path d="M50 30 C30 25, 15 45, 25 70 C35 90, 50 85, 50 85 C50 85, 65 90, 75 70 C85 45, 70 25, 50 30 Z" fill="#ef4444" />
+                        <ellipse cx="40" cy="45" rx="6" ry="10" fill="#fca5a5" transform="rotate(-15 40 45)" />
+                    </svg>
+                `;
+                wrapper.innerHTML = appleHtml;
+
+                if (isCrossedOut) {
+                    const crossHtml = `
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <svg class="w-full h-full text-black/85 drop-shadow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                    `;
+                    wrapper.innerHTML += crossHtml;
+                    wrapper.querySelector('svg').style.opacity = '0.35';
+                }
+
+                return wrapper;
+            }
+
+            // ฟังก์ชันจัดกลุ่มละ 10 ยัดกล่องสีพาสเทลเพื่อความสวยงามทางตรรกะคณิตศาสตร์สำหรับเด็ก
+            function renderGroupWithBoxes(totalCount, crossCount = 0) {
+                const mainWrapper = document.createElement('div');
+                mainWrapper.className = 'flex flex-wrap gap-2 justify-center items-center';
+
+                const fullTens = Math.floor(totalCount / 10);
+                const remainder = totalCount % 10;
+
+                // วาดทีละกลุ่มสิบ
+                for (let t = 0; t < fullTens; t++) {
+                    const tenBox = document.createElement('div');
+                    tenBox.className = 'flex flex-wrap gap-0.5 justify-center bg-amber-50 border border-amber-300 rounded-lg p-1 relative';
+                    
+                    // ป้ายบอกจำนวน "10" สีพาสเทลจิ๋ว
+                    const tag = document.createElement('span');
+                    tag.className = 'absolute -top-1.5 -right-1.5 bg-amber-400 text-[8px] text-amber-950 font-black px-1.5 rounded-full scale-90 border border-amber-500';
+                    tag.innerText = '10';
+                    tenBox.appendChild(tag);
+
+                    // ยัดแอปเปิ้ล 10 ลูกลงกล่อง
+                    for (let i = 0; i < 10; i++) {
+                        const globalIndex = t * 10 + i;
+                        const isCross = (globalIndex >= (totalCount - crossCount));
+                        tenBox.appendChild(createAppleSVG(isCross));
+                    }
+                    mainWrapper.appendChild(tenBox);
+                }
+
+                // ส่วนย่อยเศษที่เหลือ
+                if (remainder > 0) {
+                    const singleBox = document.createElement('div');
+                    singleBox.className = 'flex flex-wrap gap-0.5 justify-center bg-white/40 p-1 rounded-lg border border-dashed border-gray-300';
+                    for (let i = 0; i < remainder; i++) {
+                        const globalIndex = fullTens * 10 + i;
+                        const isCross = (globalIndex >= (totalCount - crossCount));
+                        singleBox.appendChild(createAppleSVG(isCross));
+                    }
+                    mainWrapper.appendChild(singleBox);
+                }
+
+                return mainWrapper;
+            }
+
+            if (op === '+') {
+                // กลุ่มผลแอปเปิ้ลเซ็ต 1
+                const firstGroup = renderGroupWithBoxes(n1, 0);
+                helperBox.appendChild(firstGroup);
+
+                // สัญลักษณ์เชื่อมโยงบวก
+                const plusSign = document.createElement('div');
+                plusSign.className = 'text-xl font-extrabold text-emerald-500 px-1 self-center';
+                plusSign.innerText = '➕';
+                helperBox.appendChild(plusSign);
+
+                // กลุ่มผลแอปเปิ้ลเซ็ต 2
+                const secondGroup = renderGroupWithBoxes(n2, 0);
+                helperBox.appendChild(secondGroup);
+
+            } else {
+                // แสดงผลแอปเปิ้ลทั้งหมด n1 และครอบทับด้วยกากบาทจำนวน n2 ผล
+                const minusGroup = renderGroupWithBoxes(n1, n2);
+                helperBox.appendChild(minusGroup);
+            }
+        }
+
+        function checkAnswer(selectedButton) {
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            const selectedAnswer = parseInt(selectedButton.innerText);
+
+            if (selectedAnswer === correctAnswerVal) {
+                score++;
+                setDinoState('correct');
+                playCorrectSound();
+
+                selectedButton.className = selectedButton.className.replace(/from-\S+ to-\S+/g, 'from-green-400 to-emerald-500');
+                selectedButton.className = selectedButton.className.replace(/border-\S+/g, 'border-emerald-700');
+                selectedButton.classList.add('text-white');
+            } else {
+                setDinoState('wrong');
+                playWrongSound();
+
+                selectedButton.className = selectedButton.className.replace(/from-\S+ to-\S+/g, 'from-rose-400 to-red-500');
+                selectedButton.className = selectedButton.className.replace(/border-\S+/g, 'border-red-700');
+                selectedButton.classList.add('shake-element', 'text-white');
+
+                buttons.forEach(btn => {
+                    if (parseInt(btn.innerText) === correctAnswerVal) {
+                        btn.className = btn.className.replace(/from-\S+ to-\S+/g, 'from-green-400 to-emerald-500');
+                        btn.className = btn.className.replace(/border-\S+/g, 'border-emerald-700');
+                        btn.classList.add('text-white');
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                selectedButton.classList.remove('shake-element');
+                
+                if (currentQuestionNum < activeLevel.qCount) {
+                    currentQuestionNum++;
+                    generateNewQuestion();
+                } else {
+                    showLevelCompletedSummary();
+                }
+            }, 1600);
+        }
+
+        function showLevelCompletedSummary() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('gameover-screen').classList.remove('hidden');
+
+            document.getElementById('final-score-val').innerText = `${score} / ${activeLevel.qCount}`;
+
+            const starContainer = document.getElementById('star-rewards');
+            const motivationalSpeech = document.getElementById('motivational-speech');
+            const victoryTitle = document.getElementById('victory-title');
+            const victorySubtitle = document.getElementById('victory-subtitle');
+            const victoryEmoji = document.getElementById('victory-emoji');
+            
+            starContainer.innerHTML = '';
+
+            let earnedStars = 0;
+            let success = false;
+
+            if (score === activeLevel.qCount) {
+                earnedStars = 3;
+                success = true; // ให้ผ่านด่านได้เฉพาะตอนตอบถูกครบทุกข้อ (5/5)
+                victoryEmoji.innerText = '🏆👑✨';
+                victoryTitle.innerText = 'สุดยอดราชาคณิตศาสตร์!';
+                victorySubtitle.innerText = 'ตอบถูกต้องหมดทุกข้อเลยคนเก่ง!';
+                motivationalSpeech.innerText = 'นี่รางวัลสำหรับการผจญภัยแสนวิเศษ! ปลดล็อกด่านต่อไปได้เลย! 🦖🍭';
+                playVictoryFanfare();
+                spawnConfetti();
+                animateConfetti();
+            } else if (score >= 3) {
+                earnedStars = 2;
+                success = false; // ไม่อนุญาตให้ผ่าน
+                victoryEmoji.innerText = '⭐🥈🌟';
+                victoryTitle.innerText = 'เก่งและเพียรพยายาม!';
+                victorySubtitle.innerText = 'แต่ต้องตอบให้ถูกทั้ง 5 ข้อ ถึงจะไปด่านต่อไปได้นะ!';
+                motivationalSpeech.innerText = 'รับดวงดาวสีทองไปก่อน แล้วมาลองเล่นใหม่อีกรอบนะคนเก่ง! 🦖🍬';
+                playVictoryFanfare();
+            } else if (score >= 1) {
+                earnedStars = 1;
+                success = false; // ไม่อนุญาตให้ผ่าน
+                victoryEmoji.innerText = '🎈🌻🦖';
+                victoryTitle.innerText = 'พยายามได้ดีมากจ้า!';
+                victorySubtitle.innerText = 'ต้องตอบให้ถูกทั้ง 5 ข้อ ถึงจะปลดล็อกด่านต่อไปได้นะ!';
+                motivationalSpeech.innerText = 'มาลองท้าทายใหม่อีกสักรอบ พี่ไดโนเอาใจช่วยนะจ๊ะ! 🌻🍉';
+                playNote(300, 'sine', 0.2);
+                playNote(400, 'sine', 0.4, 0.25);
+            } else {
+                earnedStars = 0;
+                success = false; // ไม่อนุญาตให้ผ่าน
+                victoryEmoji.innerText = '🦕💦🥺';
+                victoryTitle.innerText = 'พยายามอีกนิดนะจ๊ะ!';
+                victorySubtitle.innerText = 'ต้องตอบให้ถูกทั้ง 5 ข้อ ถึงจะปลดล็อกด่านต่อไปได้นะ!';
+                motivationalSpeech.innerText = 'พี่ไดโนเตรียมตะกร้าผลไม้ไว้คอยนับเคียงข้างเสมอ สู้ ๆ นะเด็กดี! 🦖🍀';
+                playNote(220, 'sawtooth', 0.5);
+            }
+
+            // บันทึกดาวสูงสุดของระดับด่านลงระบบ
+            const currentList = levelsData[activeCategory];
+            const originalLevel = currentList.find(lvl => lvl.id === activeLevel.id);
+            if (originalLevel) {
+                if (earnedStars > originalLevel.stars) {
+                    originalLevel.stars = earnedStars;
+                }
+            }
+
+            // ปลดล็อกด่านถัดไปถ้าเล่นผ่านอย่างน้อย 1 ดาวขึ้นไป
+            if (success) {
+                const nextId = activeLevel.id + 1;
+                const nextLevel = currentList.find(lvl => lvl.id === nextId);
+                if (nextLevel && !nextLevel.unlocked) {
+                    nextLevel.unlocked = true;
+                }
+            }
+
+            // ปรับปุ่มลุยด่านต่อไป
+            const btnNext = document.getElementById('btn-next-level');
+            const hasNextLevel = (activeLevel.id < currentList.length);
+            
+            if (success && hasNextLevel) {
+                btnNext.classList.remove('hidden');
+                btnNext.innerText = `➡️ เดินทางต่อด่านที่ ${activeLevel.id + 1} กัน!`;
+            } else {
+                btnNext.classList.add('hidden');
+            }
+
+            // แสดงสติ๊กเกอร์สะสมดาวสีทอง
+            for (let i = 0; i < 3; i++) {
+                const star = document.createElement('span');
+                if (i < earnedStars) {
+                    star.innerText = '⭐';
+                    star.className = 'transform scale-125 mx-1 inline-block pop-correct filter drop-shadow';
+                    star.style.animationDelay = `${i * 0.15}s`;
+                } else {
+                    star.innerText = '☆';
+                    star.className = 'text-gray-300 mx-1 inline-block opacity-45';
+                }
+                starContainer.appendChild(star);
+            }
+
+            saveProgressToLocal();
+        }
+
+        // หน้าต่างแรกรับของหน้าเว็บบราวเซอร์
+        window.onload = function () {
+            loadLevelsProgress();
+            renderLevelsMap();
+        }
+    </script>
+</body>
+</html>
