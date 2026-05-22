@@ -279,16 +279,48 @@
         let isMusicEnabled = true; 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // โครงสร้างคอร์ด (C Major -> F Major -> G Major -> C Major)
-        const bgmChords = [
-            { bass: [130.81, 196.00], melody: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25] },
-            { bass: [174.61, 261.63], melody: [349.23, 392.00, 440.00, 523.25, 587.33, 698.46] },
-            { bass: [196.00, 293.66], melody: [392.00, 440.00, 493.88, 587.33, 659.25, 783.99] },
-            { bass: [130.81, 196.00], melody: [523.25, 440.00, 392.00, 329.63, 293.66, 261.63] }
-        ];
+        // 🎵 โครงสร้างคอร์ดต่างๆ สำหรับ 10 ด่าน (อัปเกรดใหม่!)
+        const C_MAJ = { bass: [130.81, 196.00], melody: [261.63, 329.63, 392.00, 523.25, 659.25] };
+        const F_MAJ = { bass: [174.61, 261.63], melody: [349.23, 440.00, 523.25, 698.46, 880.00] };
+        const G_MAJ = { bass: [196.00, 293.66], melody: [392.00, 493.88, 587.33, 783.99, 987.77] };
+        const A_MIN = { bass: [220.00, 164.81], melody: [440.00, 523.25, 659.25, 880.00, 1046.50] };
+        const D_MIN = { bass: [146.83, 220.00], melody: [293.66, 349.23, 440.00, 587.33, 698.46] };
+        const E_MIN = { bass: [164.81, 246.94], melody: [329.63, 392.00, 493.88, 659.25, 783.99] };
+        const BB_MAJ = { bass: [116.54, 174.61], melody: [233.08, 293.66, 349.23, 466.16, 587.33] };
+        const D_MAJ = { bass: [146.83, 220.00], melody: [293.66, 369.99, 440.00, 587.33, 739.99] };
+        const EB_MAJ = { bass: [155.56, 233.08], melody: [311.13, 392.00, 466.16, 622.25, 783.99] };
+        const C_MIN = { bass: [130.81, 196.00], melody: [261.63, 311.13, 392.00, 523.25, 622.25] };
 
+        // จัดธีมเพลงให้แต่ละด่าน (ความเร็ว, คอร์ด, และสไตล์กลอง)
+        const musicThemes = {
+            'map': { tempo: 280, chords: [C_MAJ, F_MAJ, C_MAJ, G_MAJ], drum: 'light' },
+            1: { tempo: 260, chords: [C_MAJ, F_MAJ, G_MAJ, C_MAJ], drum: 'bouncy' },
+            2: { tempo: 250, chords: [D_MAJ, G_MAJ, A_MIN, D_MAJ], drum: 'bouncy' },
+            3: { tempo: 240, chords: [F_MAJ, BB_MAJ, C_MAJ, F_MAJ], drum: 'march' },
+            4: { tempo: 270, chords: [A_MIN, D_MIN, E_MIN, A_MIN], drum: 'mystery' },
+            5: { tempo: 220, chords: [G_MAJ, C_MAJ, D_MAJ, G_MAJ], drum: 'fast' },
+            6: { tempo: 250, chords: [C_MAJ, E_MIN, F_MAJ, G_MAJ], drum: 'bouncy' },
+            7: { tempo: 230, chords: [BB_MAJ, EB_MAJ, F_MAJ, BB_MAJ], drum: 'march' },
+            8: { tempo: 210, chords: [D_MIN, BB_MAJ, C_MAJ, D_MIN], drum: 'action' },
+            9: { tempo: 190, chords: [EB_MAJ, C_MIN, G_MAJ, EB_MAJ], drum: 'action' },
+            10: { tempo: 170, chords: [C_MIN, F_MAJ, G_MAJ, C_MIN], drum: 'boss' }
+        };
+
+        let currentThemeKey = 'map';
         let bgmBeat = 0;
         let bgmTimer = null;
+
+        function switchMusicTheme(themeKey) {
+            currentThemeKey = themeKey;
+            if (bgmTimer) {
+                clearTimeout(bgmTimer);
+                bgmTimer = null;
+            }
+            bgmBeat = 0;
+            if (isMusicEnabled && audioCtx.state !== 'suspended') {
+                playBgmBeat();
+            }
+        }
 
         function playSynthTone(freq, type, volume, duration) {
             if (!isMusicEnabled) return;
@@ -344,33 +376,55 @@
                 audioCtx.resume();
             }
 
-            const chordIndex = Math.floor(bgmBeat / 8) % bgmChords.length;
+            const theme = musicThemes[currentThemeKey] || musicThemes['map'];
+            const chordIndex = Math.floor(bgmBeat / 8) % theme.chords.length;
             const step = bgmBeat % 8;
-            const currentChord = bgmChords[chordIndex];
+            const currentChord = theme.chords[chordIndex];
 
             try {
-                // จังหวะเบสคู่สลับ
-                if (step === 0 || step === 4) {
-                    playSynthTone(currentChord.bass[0], 'triangle', 0.05, 0.22);
-                } else if (step === 2 || step === 6) {
-                    playSynthTone(currentChord.bass[1], 'triangle', 0.05, 0.22);
+                // จังหวะเบส (Bass Logic ตามธีม)
+                if (theme.drum === 'fast' || theme.drum === 'action') {
+                    if (step % 2 === 0) playSynthTone(currentChord.bass[0], 'triangle', 0.05, 0.15);
+                    else playSynthTone(currentChord.bass[1], 'triangle', 0.05, 0.15);
+                } else if (theme.drum === 'boss') {
+                    playSynthTone(currentChord.bass[step % 2], 'square', 0.04, 0.2);
+                } else {
+                    let bassTone = currentChord.bass[0];
+                    if (step === 2 || step === 6) bassTone = currentChord.bass[1];
+                    if (step % 2 === 0) playSynthTone(bassTone, 'triangle', 0.05, 0.22);
                 }
 
-                // สแนร์และเครื่องเคาะตบจังหวะ
-                if (step === 1 || step === 3 || step === 5 || step === 7) {
-                    playDrumTick(0.005, false);
-                }
-                if (step === 4) {
-                    playDrumTick(0.012, true);
+                // สแนร์และเครื่องเคาะตบจังหวะ (Drum Logic ตามธีม)
+                if (theme.drum === 'bouncy' || theme.drum === 'light') {
+                    if (step === 1 || step === 3 || step === 5 || step === 7) playDrumTick(0.005, false);
+                    if (step === 4 && theme.drum === 'bouncy') playDrumTick(0.012, true);
+                } else if (theme.drum === 'march') {
+                    if (step % 2 === 0) playDrumTick(0.008, false); 
+                    if (step % 2 !== 0) playDrumTick(0.012, true);  
+                } else if (theme.drum === 'mystery') {
+                    if (step === 0) playDrumTick(0.01, false);
+                    if (step === 4) playDrumTick(0.015, true);
+                } else if (theme.drum === 'fast') {
+                    playDrumTick(0.005, false); 
+                    if (step === 4) playDrumTick(0.015, true);
+                } else if (theme.drum === 'action') {
+                    if (step === 0 || step === 3 || step === 5) playDrumTick(0.01, false);
+                    if (step === 2 || step === 6) playDrumTick(0.015, true);
+                } else if (theme.drum === 'boss') {
+                    if (step === 0 || step === 1 || step === 4 || step === 5) playDrumTick(0.015, false);
+                    if (step === 2 || step === 6) playDrumTick(0.02, true);
                 }
 
-                // ไล่ทำนอง Chiptune คิวท์ ๆ
-                const melodyPattern = [0, 2, 1, 3, 2, 4, 3, 5];
-                const playMelodySteps = [0, 1, 2, 3, 5, 6, 7];
+                // ไล่ทำนอง (Melody Logic ตามธีม)
+                let melodyPattern = [0, 2, 1, 3, 2, 4, 3, 5]; 
+                if (theme.drum === 'fast') melodyPattern = [0, 1, 2, 3, 4, 3, 2, 1];
+                if (theme.drum === 'boss') melodyPattern = [4, 3, 4, 2, 4, 1, 4, 0];
+                if (theme.drum === 'mystery') melodyPattern = [0, -1, 1, -1, 2, -1, 1, -1]; 
+                if (theme.drum === 'action') melodyPattern = [0, 2, 0, 3, 0, 4, 0, 2];
                 
-                if (playMelodySteps.includes(step)) {
-                    const noteIndex = melodyPattern[step] % currentChord.melody.length;
-                    const noteFreq = currentChord.melody[noteIndex];
+                const noteIndex = melodyPattern[step];
+                if (noteIndex >= 0) {
+                    const noteFreq = currentChord.melody[noteIndex % currentChord.melody.length];
                     playSynthTone(noteFreq, 'sine', 0.011, 0.15);
                 }
             } catch (e) {
@@ -378,7 +432,7 @@
             }
 
             bgmBeat++;
-            bgmTimer = setTimeout(playBgmBeat, 260); // จังหวะดนตรีสนุกแบบกึ่งเดินขบวน
+            bgmTimer = setTimeout(playBgmBeat, theme.tempo); // ความเร็วเปลี่ยนตามด่าน
         }
 
         function toggleBgm(forceState = null) {
@@ -769,6 +823,9 @@
             score = 0;
             askedQuestionsList = []; // รีเซ็ตประวัติโจทย์เก่าเมื่อเริ่มเข้าเล่นด่านใหม่
 
+            // เริ่มเล่นเพลงประจำด่าน
+            switchMusicTheme(levelId);
+
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('gameover-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
@@ -784,6 +841,10 @@
         function exitToMainMenu() {
             stopConfetti();
             activeLevel = null;
+
+            // กลับไปเล่นเพลงของหน้าแผนที่
+            switchMusicTheme('map');
+
             document.getElementById('start-screen').classList.remove('hidden');
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('gameover-screen').classList.add('hidden');
