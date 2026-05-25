@@ -116,7 +116,7 @@
             </div>
 
             <div class="text-center mt-4">
-                <button onclick="startGame()" class="inline-block w-full md:w-auto bg-gradient-to-r from-sky-400 to-sky-500 text-white font-extrabold text-3xl py-5 px-12 rounded-3xl shadow-xl border-b-8 border-sky-600 hover:scale-105 active:scale-95 active:border-b-0 active:translate-y-2 transition-all animate-bounce">
+                <button onclick="startGame()" class="inline-block w-full md:w-auto bg-gradient-to-r from-sky-400 to-sky-500 text-white font-extrabold text-3xl py-5 px-12 rounded-3xl shadow-xl border-b-8 border-sky-600 hover:scale-105 active:scale-95 active:border-b-0 active:translate-y-2 transition-all">
                     🚀 เริ่มเล่นเกมเลย!
                 </button>
             </div>
@@ -232,12 +232,19 @@
             { id: 1, name: 'อมยิ้ม', emoji: '🍭', basePrice: 3 }, { id: 2, name: 'ไอศกรีม', emoji: '🍦', basePrice: 12 },
             { id: 3, name: 'โดนัท', emoji: '🍩', basePrice: 8 }, { id: 4, name: 'คัพเค้ก', emoji: '🧁', basePrice: 15 },
             { id: 5, name: 'นมวัว', emoji: '🥛', basePrice: 10 }, { id: 6, name: 'แอปเปิ้ล', emoji: '🍎', basePrice: 5 },
-            { id: 10, name: 'รถของเล่น', emoji: '🚗', basePrice: 50 }, { id: 15, name: 'ช็อกโกแลต', emoji: '🍫', basePrice: 35 }
+            { id: 7, name: 'ส้ม', emoji: '🍊', basePrice: 7 }, { id: 8, name: 'แตงโม', emoji: '🍉', basePrice: 18 },
+            { id: 9, name: 'ลูกอม', emoji: '🍬', basePrice: 2 }, { id: 10, name: 'รถของเล่น', emoji: '🚗', basePrice: 50 },
+            { id: 11, name: 'สีระบายน้ำ', emoji: '🎨', basePrice: 28 }, { id: 12, name: 'ดินสอ', emoji: '✏️', basePrice: 4 },
+            { id: 13, name: 'ขนมปัง', emoji: '🍞', basePrice: 9 }, { id: 14, name: 'น้ำผลไม้', emoji: '🍹', basePrice: 20 },
+            { id: 15, name: 'ช็อกโกแลต', emoji: '🍫', basePrice: 35 }, { id: 16, name: 'ยางลบ', emoji: '🧽', basePrice: 4 },
+            { id: 17, name: 'ไม้บรรทัด', emoji: '📏', basePrice: 5 }, { id: 18, name: 'กล้วย', emoji: '🍌', basePrice: 6 },
+            { id: 19, name: 'ตุ๊กตาหมี', emoji: '🧸', basePrice: 45 }, { id: 20, name: 'ลูกโป่ง', emoji: '🎈', basePrice: 6 }
         ];
 
         let score = 0, hearts = 3, difficulty = 'easy', selectedCharacter = 'bear';
         let trayCoins = [], targetAmount = 0, currentLevelRound = 0;
-        const ROUNDS_PER_GAME = 5;
+        let usedItemIds = []; // ระบบจำว่าข้อไหนเคยออกแล้ว
+        const ROUNDS_PER_GAME = 10;
         let currentQuestionText = "";
         
         let isVoiceEnabled = true, synth, pianoSynth;
@@ -379,7 +386,7 @@
         function goBackToMenu() { showScreen('menu-screen'); }
 
         function startGame() {
-            score = 0; hearts = 3; currentLevelRound = 1; trayCoins = [];
+            score = 0; hearts = 3; currentLevelRound = 1; trayCoins = []; usedItemIds = [];
             updateDashboards();
             generateLevelQuestion();
             showScreen('game-screen');
@@ -451,10 +458,17 @@
 
             let maxPrice = difficulty === 'easy' ? 9 : difficulty === 'medium' ? 49 : 99;
             
-            // Random item logic based on max price
-            let validItems = ITEMS.filter(i => i.basePrice <= maxPrice);
-            if(validItems.length === 0) validItems = ITEMS; // fallback
+            // Random item logic: ไม่เอาสินค้าที่ซ้ำกับที่เคยออกไปแล้ว
+            let validItems = ITEMS.filter(i => i.basePrice <= maxPrice && !usedItemIds.includes(i.id));
+            
+            // หากของไม่เหลือแล้วจริงๆ ให้รีเซ็ตค่ากลับมาใหม่เพื่อกันบัค
+            if(validItems.length === 0) { 
+                validItems = ITEMS.filter(i => i.basePrice <= maxPrice);
+                usedItemIds = []; 
+            }
+            
             const chosenItem = validItems[Math.floor(Math.random() * validItems.length)];
+            usedItemIds.push(chosenItem.id); // บันทึกว่าชิ้นนี้ออกแล้ว
             const price = chosenItem.basePrice;
 
             // Determine what bill customer pays with
