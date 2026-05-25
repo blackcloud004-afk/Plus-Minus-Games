@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ตลาดจำลองแสนสนุก - โหมดทอนเงินแม่ค้า</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Itim', cursive;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bounce-hover:hover { animation: gentle-bounce 0.5s ease infinite; }
+        @keyframes gentle-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        
+        .anim-happy { animation: char-jump-happy 0.5s ease 3; }
+        @keyframes char-jump-happy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-25px); } }
+        
+        .anim-sad { animation: char-shake-sad 0.6s ease 2; }
+        @keyframes char-shake-sad { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-10px) rotate(-5deg); } 40% { transform: translateX(10px) rotate(5deg); } 60% { transform: translateX(-10px) rotate(-5deg); } 80% { transform: translateX(10px) rotate(5deg); } }
+
+        /* Thai Coins specific styles */
+        .coin-1 { background: radial-gradient(circle, #fca5a5 0%, #b91c1c 100%); border-color: #7f1d1d; color: white; }
+        .coin-2 { background: radial-gradient(circle, #fde047 0%, #a16207 100%); border-color: #713f12; color: white; }
+        .coin-5 { background: radial-gradient(circle, #f1f5f9 0%, #94a3b8 100%); border-color: #475569; color: #0f172a; }
+        .coin-10 { background: radial-gradient(circle, #fde047 40%, #e2e8f0 45%); border-color: #64748b; color: #422006; box-shadow: inset 0 0 0 2px #cbd5e1; }
+        
+        /* Thai Bills specific styles */
+        .bill-20 { background: #dcfce7; border-color: #22c55e; color: #14532d; }
+        .bill-50 { background: #dbeafe; border-color: #3b82f6; color: #1e3a8a; }
+        .bill-100 { background: #fee2e2; border-color: #ef4444; color: #7f1d1d; }
+
+        .money-btn { transition: transform 0.1s; }
+        .money-btn:active { transform: scale(0.9); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-pink-100 via-amber-50 to-sky-100 min-h-screen overflow-x-hidden flex flex-col justify-between">
+
+    <div id="welcome-overlay" class="fixed inset-0 bg-white/90 z-50 flex flex-col items-center justify-center p-4 transition-all duration-500">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border-4 border-yellow-400">
+            <div class="text-6xl mb-4 animate-bounce">🏪🪙</div>
+            <h1 class="text-4xl font-bold text-amber-600 mb-2">ยินดีต้อนรับสู่</h1>
+            <h2 class="text-3xl font-extrabold text-sky-500 mb-6">โหมดทอนเงินแม่ค้า!</h2>
+            <p class="text-lg text-gray-600 mb-6">มาฝึกคิดเลขลบ และทอนเงินให้ลูกค้าอย่างถูกต้องกันเถอะ!</p>
+            <button onclick="initGame()" class="w-full bg-emerald-400 hover:bg-emerald-500 text-white text-2xl font-bold py-4 px-8 rounded-2xl shadow-lg border-b-8 border-emerald-600 active:border-b-2 active:translate-y-1 transition-all">
+                🌟 เริ่มเล่นเกมเลย 🌟
+            </button>
+        </div>
+    </div>
+
+    <header class="w-full bg-white/80 backdrop-blur-md shadow-md py-3 px-4 flex justify-between items-center z-10 sticky top-0">
+        <div class="flex items-center space-x-2">
+            <span class="text-3xl">🪙</span>
+            <h1 class="text-xl font-bold text-sky-600">ทอนเงินแม่ค้า</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="voice-btn" onclick="toggleVoice()" class="p-2 bg-sky-100 text-sky-600 rounded-full hover:bg-sky-200 transition-colors">
+                <i class="fas fa-volume-up text-xl" id="voice-icon"></i>
+            </button>
+            <div class="bg-amber-100 px-3 py-1 rounded-full flex items-center space-x-1 border border-amber-300">
+                <span class="text-xl">⭐</span>
+                <span id="score-val" class="text-lg font-bold text-amber-800">0</span>
+            </div>
+            <div class="flex space-x-1" id="hearts-container">❤️ ❤️ ❤️</div>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full max-w-5xl mx-auto px-4 py-4 md:py-6 flex flex-col justify-center">
+
+        <section id="menu-screen" class="hidden flex flex-col space-y-6">
+            <div class="text-center bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-xl border-4 border-dashed border-amber-300">
+                <h3 class="text-2xl font-bold text-amber-700 mb-4">🐾 ขั้นตอนที่ 1: เลือกเพื่อนคู่หูของคุณหนูๆ</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <button onclick="selectCharacter('bear')" id="char-bear" class="char-btn bg-white p-3 rounded-2xl border-4 border-transparent hover:border-amber-400 shadow-md transition-all">
+                        <span class="text-4xl block">🐻</span>
+                        <span class="text-sm font-bold text-gray-700">พี่หมีน้อย</span>
+                    </button>
+                    <button onclick="selectCharacter('rabbit')" id="char-rabbit" class="char-btn bg-white p-3 rounded-2xl border-4 border-transparent hover:border-pink-400 shadow-md transition-all">
+                        <span class="text-4xl block">🐰</span>
+                        <span class="text-sm font-bold text-gray-700">พี่กระต่าย</span>
+                    </button>
+                    <button onclick="selectCharacter('cat')" id="char-cat" class="char-btn bg-white p-3 rounded-2xl border-4 border-transparent hover:border-sky-400 shadow-md transition-all">
+                        <span class="text-4xl block">🐱</span>
+                        <span class="text-sm font-bold text-gray-700">พี่เหมียว</span>
+                    </button>
+                    <button onclick="selectCharacter('panda')" id="char-panda" class="char-btn bg-white p-3 rounded-2xl border-4 border-transparent hover:border-green-400 shadow-md transition-all">
+                        <span class="text-4xl block">🐼</span>
+                        <span class="text-sm font-bold text-gray-700">พี่แพนด้า</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-xl border-4 border-dashed border-sky-300">
+                <h3 class="text-2xl font-bold text-sky-700 mb-4">🎯 ขั้นตอนที่ 2: เลือกความยากง่าย</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button onclick="selectDifficulty('easy')" id="diff-easy" class="diff-btn bg-green-100 p-4 rounded-2xl border-4 border-transparent text-green-700 font-bold text-lg shadow-sm transition-all border-green-500 scale-105">
+                        🟢 ง่ายที่สุด<br><span class="text-xs font-normal">ทอนเงินไม่เกิน 10 บาท</span>
+                    </button>
+                    <button onclick="selectDifficulty('medium')" id="diff-medium" class="diff-btn bg-yellow-100 p-4 rounded-2xl border-4 border-transparent text-yellow-700 font-bold text-lg shadow-sm transition-all">
+                        🟡 ปานกลาง<br><span class="text-xs font-normal">ทอนเงินไม่เกิน 50 บาท</span>
+                    </button>
+                    <button onclick="selectDifficulty('hard')" id="diff-hard" class="diff-btn bg-red-100 p-4 rounded-2xl border-4 border-transparent text-red-700 font-bold text-lg shadow-sm transition-all">
+                        🔴 ท้าทาย<br><span class="text-xs font-normal">ทอนเงินไม่เกิน 100 บาท</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button onclick="startGame()" class="inline-block w-full md:w-auto bg-gradient-to-r from-sky-400 to-sky-500 text-white font-extrabold text-3xl py-5 px-12 rounded-3xl shadow-xl border-b-8 border-sky-600 hover:scale-105 active:scale-95 active:border-b-0 active:translate-y-2 transition-all animate-bounce">
+                    🚀 เริ่มเล่นเกมเลย!
+                </button>
+            </div>
+        </section>
+
+        <section id="game-screen" class="hidden flex flex-col space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-stretch">
+                
+                <div class="bg-white rounded-3xl p-5 shadow-xl border-4 border-amber-200 flex flex-col relative h-full">
+                    
+                    <div class="flex flex-row w-full items-center justify-center mb-4 gap-4">
+                        <div id="character-wrapper" class="flex flex-col items-center relative shrink-0 transition-transform duration-300">
+                            <div id="emotion-fx" class="absolute -top-6 text-4xl opacity-0 transition-opacity duration-300 z-50">✨</div>
+                            <div id="shopkeeper-body" class="relative w-24 h-28 md:w-28 md:h-32 flex flex-col items-center transform scale-90 md:scale-100">
+                                <span id="shopkeeper-head" class="text-6xl md:text-7xl z-20 absolute top-0 transition-transform">🐻</span>
+                                <div id="shopkeeper-torso" class="w-14 h-12 md:w-16 md:h-14 rounded-2xl absolute top-12 md:top-14 z-10 border-4 shadow-inner bg-amber-600 border-amber-700"></div>
+                                <span id="shopkeeper-arms" class="text-3xl md:text-4xl absolute top-12 md:top-14 z-30 transition-transform">👐</span>
+                                <div class="flex space-x-2 absolute top-20 md:top-24 z-0">
+                                    <div id="leg-l" class="w-5 h-7 md:w-6 md:h-8 rounded-full border-4 bg-amber-600 border-amber-700"></div>
+                                    <div id="leg-r" class="w-5 h-7 md:w-6 md:h-8 rounded-full border-4 bg-amber-600 border-amber-700"></div>
+                                </div>
+                            </div>
+                            <span class="text-xs md:text-sm font-bold text-amber-800 bg-yellow-100 border border-yellow-300 px-3 py-1 rounded-full mt-1 shadow-sm relative z-40" id="shopkeeper-name">คนขายพี่หมี</span>
+                        </div>
+
+                        <div class="flex-1 relative">
+                            <div class="absolute -left-3 top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-[14px] border-r-blue-200 border-b-8 border-b-transparent z-10"></div>
+                            <div class="absolute -left-2 top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-[14px] border-r-blue-50 border-b-8 border-b-transparent z-20"></div>
+                            <div class="bg-blue-50 px-4 py-3 md:px-5 md:py-4 rounded-3xl shadow-md border-2 border-blue-200 relative z-10 flex items-center justify-between gap-2">
+                                <p id="speech-bubble" class="text-blue-900 text-sm md:text-lg font-bold text-center flex-1">"ยินดีต้อนรับจ้า!"</p>
+                                <button onclick="repeatQuestion()" class="bg-blue-200 hover:bg-blue-300 text-blue-800 p-2 rounded-full transition-colors flex-shrink-0 flex items-center justify-center w-10 h-10 shadow-sm"><i class="fas fa-volume-up text-lg"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full bg-amber-50 p-4 rounded-2xl border-2 border-amber-100 flex flex-col space-y-4 items-center justify-center shadow-inner mt-auto flex-grow" id="item-shelf">
+                        </div>
+                </div>
+
+                <div class="bg-emerald-50 rounded-3xl p-4 md:p-5 shadow-xl border-4 border-emerald-200 flex flex-col justify-between h-full">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-md md:text-lg font-bold text-emerald-800 flex items-center space-x-1">
+                                <span>🫳 ถาดเงินทอน</span>
+                            </span>
+                        </div>
+
+                        <div id="payment-tray" class="bg-white rounded-2xl p-3 md:p-4 min-h-[100px] md:min-h-[120px] flex flex-wrap gap-2 items-center justify-center border-2 border-dashed border-emerald-300 shadow-inner">
+                            <span class="text-gray-400 text-xs md:text-sm text-center">แตะเงินในกระเป๋าเพื่อทอนที่นี่จ้า...</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="flex justify-between items-center bg-emerald-100/60 p-2 md:p-3 rounded-xl mb-3">
+                            <span class="font-bold text-emerald-900 text-sm md:text-base">เงินทอนในถาด:</span>
+                            <span class="text-xl md:text-2xl font-black text-emerald-700" id="tray-total-display">0 บาท</span>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-3 border-2 border-emerald-100 mb-3 shadow-sm">
+                            <h4 class="text-center font-bold text-emerald-800 mb-2 text-xs md:text-sm">👛 กระเป๋าตังค์ (กดเลือก)</h4>
+                            
+                            <div id="banknotes-row" class="flex justify-center gap-2 mb-2">
+                                <button onclick="addMoney(100)" class="money-btn bill-100 w-16 h-10 md:w-20 md:h-12 border-2 rounded-lg font-black shadow-sm flex flex-col items-center justify-center">
+                                    <span class="text-[8px] md:text-[10px] opacity-80">ธนบัตร</span><span class="text-sm md:text-base">100</span>
+                                </button>
+                                <button onclick="addMoney(50)" class="money-btn bill-50 w-16 h-10 md:w-20 md:h-12 border-2 rounded-lg font-black shadow-sm flex flex-col items-center justify-center">
+                                    <span class="text-[8px] md:text-[10px] opacity-80">ธนบัตร</span><span class="text-sm md:text-base">50</span>
+                                </button>
+                                <button onclick="addMoney(20)" class="money-btn bill-20 w-16 h-10 md:w-20 md:h-12 border-2 rounded-lg font-black shadow-sm flex flex-col items-center justify-center">
+                                    <span class="text-[8px] md:text-[10px] opacity-80">ธนบัตร</span><span class="text-sm md:text-base">20</span>
+                                </button>
+                            </div>
+                            
+                            <div class="flex justify-center gap-2 md:gap-3">
+                                <button onclick="addMoney(10)" class="money-btn coin-10 w-10 h-10 md:w-12 md:h-12 border-2 rounded-full font-black shadow-sm flex items-center justify-center text-sm md:text-base">10</button>
+                                <button onclick="addMoney(5)" class="money-btn coin-5 w-9 h-9 md:w-11 md:h-11 border-2 rounded-full font-black shadow-sm flex items-center justify-center text-sm md:text-base">5</button>
+                                <button onclick="addMoney(2)" class="money-btn coin-2 w-8 h-8 md:w-10 md:h-10 border-2 rounded-full font-black shadow-sm flex items-center justify-center text-xs md:text-sm">2</button>
+                                <button onclick="addMoney(1)" class="money-btn coin-1 w-7 h-7 md:w-9 md:h-9 border-2 rounded-full font-black shadow-sm flex items-center justify-center text-xs md:text-sm">1</button>
+                            </div>
+                        </div>
+
+                        <button onclick="checkAnswer()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xl md:text-2xl font-black py-3 md:py-4 px-4 rounded-2xl shadow-lg border-b-4 md:border-b-8 border-emerald-700 active:border-b-2 active:translate-y-1 transition-all flex items-center justify-center">
+                            <span>🤝 ยืนยันการทอนเงิน</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button onclick="goBackToMenu()" class="text-amber-600 hover:text-amber-800 underline font-bold text-lg md:text-xl"><i class="fas fa-chevron-left"></i> กลับไปหน้าเมนูหลัก</button>
+            </div>
+        </section>
+
+        <section id="reward-screen" class="hidden text-center bg-white/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl border-4 border-yellow-400 flex flex-col items-center space-y-6 max-w-lg mx-auto">
+            <div class="text-7xl animate-bounce">🏆⭐🎉</div>
+            <h2 class="text-4xl font-extrabold text-amber-600">สุดยอดฝีมือเลยจ้า!</h2>
+            <div class="bg-yellow-50 p-6 rounded-2xl border-2 border-yellow-300 w-full">
+                <span class="text-lg block text-yellow-800 font-bold mb-2">⭐ คะแนนที่คุณได้รับ ⭐</span>
+                <span class="text-5xl font-black text-yellow-600" id="final-score-val">0</span>
+            </div>
+            <button onclick="goBackToMenu()" class="w-full bg-gradient-to-r from-sky-400 to-sky-500 text-white font-extrabold text-2xl py-4 px-8 rounded-2xl shadow-lg border-b-8 border-sky-700 active:border-b-2 transition-all">เล่นใหม่อีกครั้ง</button>
+        </section>
+
+        <section id="game-over-screen" class="hidden text-center bg-white/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl border-4 border-red-400 flex flex-col items-center space-y-6 max-w-lg mx-auto">
+            <div class="text-7xl animate-bounce">💔🥲</div>
+            <h2 class="text-4xl font-extrabold text-red-600">พยายามได้ดีมากจ้า!</h2>
+            <button onclick="goBackToMenu()" class="w-full bg-gradient-to-r from-amber-400 to-amber-500 text-white font-extrabold text-2xl py-4 px-8 rounded-2xl shadow-lg border-b-8 border-amber-700 active:border-b-2 transition-all">ลองใหม่อีกหน</button>
+        </section>
+    </main>
+
+    <script>
+        const ITEMS = [
+            { id: 1, name: 'อมยิ้ม', emoji: '🍭', basePrice: 3 }, { id: 2, name: 'ไอศกรีม', emoji: '🍦', basePrice: 12 },
+            { id: 3, name: 'โดนัท', emoji: '🍩', basePrice: 8 }, { id: 4, name: 'คัพเค้ก', emoji: '🧁', basePrice: 15 },
+            { id: 5, name: 'นมวัว', emoji: '🥛', basePrice: 10 }, { id: 6, name: 'แอปเปิ้ล', emoji: '🍎', basePrice: 5 },
+            { id: 10, name: 'รถของเล่น', emoji: '🚗', basePrice: 50 }, { id: 15, name: 'ช็อกโกแลต', emoji: '🍫', basePrice: 35 }
+        ];
+
+        let score = 0, hearts = 3, difficulty = 'easy', selectedCharacter = 'bear';
+        let trayCoins = [], targetAmount = 0, currentLevelRound = 0;
+        const ROUNDS_PER_GAME = 5;
+        let currentQuestionText = "";
+        
+        let isVoiceEnabled = true, synth, pianoSynth;
+        const scale = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]; // สเกล C Major สำหรับเสียงเปียโนเวลาหยอดเหรียญ
+
+        async function initGame() {
+            document.getElementById('welcome-overlay').style.display = 'none';
+            await Tone.start();
+            
+            // เปลี่ยนมาใช้ PolySynth เพื่อให้เล่นเสียงทับซ้อนได้โดยไม่ Error
+            synth = new Tone.PolySynth(Tone.Synth).toDestination();
+            
+            // เปียโนสำหรับตอนกดเหรียญ
+            pianoSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+            }).toDestination();
+            
+            showScreen('menu-screen');
+            updateDashboards();
+            selectCharacter('bear', true);
+            selectDifficulty('easy', true);
+
+            currentQuestionText = "ยินดีต้อนรับสู่โหมดทอนเงินแม่ค้าจ้า เลือกคู่หู เลือกความยาก แล้วกดเริ่มเล่นได้เลยจ้า";
+            speak(currentQuestionText);
+        }
+
+        // --- Core Audio & TTS ---
+        function speak(text) {
+            if (!isVoiceEnabled) return;
+            if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH'; utterance.rate = 0.85; utterance.pitch = 1.8;
+            const voices = window.speechSynthesis.getVoices();
+            const thVoice = voices.find(v => v.lang.includes('TH') || v.lang.includes('th'));
+            if (thVoice) utterance.voice = thVoice;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function repeatQuestion() {
+            if (currentQuestionText) {
+                synth.triggerAttackRelease('E5', '16n');
+                speak(currentQuestionText);
+            }
+        }
+
+        function toggleVoice() {
+            isVoiceEnabled = !isVoiceEnabled;
+            const icon = document.getElementById('voice-icon');
+            if (isVoiceEnabled) {
+                icon.className = "fas fa-volume-up text-xl";
+                synth.triggerAttackRelease('E5', '8n'); speak("เปิดเสียงจ้า");
+            } else {
+                icon.className = "fas fa-volume-mute text-xl";
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        // --- Visual & Character Updates ---
+        function updateCharacterVisuals() {
+            const torso = document.getElementById('shopkeeper-torso');
+            const legL = document.getElementById('leg-l');
+            const legR = document.getElementById('leg-r');
+            torso.className = 'w-14 h-12 md:w-16 md:h-14 rounded-2xl absolute top-12 md:top-14 z-10 border-4 shadow-inner';
+            legL.className = 'w-5 h-7 md:w-6 md:h-8 rounded-full border-4';
+            legR.className = 'w-5 h-7 md:w-6 md:h-8 rounded-full border-4';
+
+            const chars = {
+                bear: { head: '🐻', name: 'คนขายพี่หมี', col: 'amber', shade: 700 },
+                rabbit: { head: '🐰', name: 'คนขายพี่กระต่าย', col: 'pink', shade: 300 },
+                cat: { head: '🐱', name: 'คนขายพี่เหมียว', col: 'orange', shade: 300 },
+                panda: { head: '🐼', name: 'คนขายพี่แพนด้า', col: 'gray', shade: 800 }
+            };
+            const c = chars[selectedCharacter];
+            document.getElementById('shopkeeper-head').innerText = c.head;
+            document.getElementById('shopkeeper-name').innerText = c.name;
+            torso.classList.add(`bg-${c.col}-${c.shade}`, `border-${c.col}-${c.shade === 800 ? 900 : c.shade+100}`);
+            legL.classList.add(`bg-${c.col}-${c.shade}`, `border-${c.col}-${c.shade === 800 ? 900 : c.shade+100}`);
+            legR.classList.add(`bg-${c.col}-${c.shade}`, `border-${c.col}-${c.shade === 800 ? 900 : c.shade+100}`);
+        }
+
+        function playCharacterAnimation(emotion) {
+            const wrapper = document.getElementById('character-wrapper');
+            const arms = document.getElementById('shopkeeper-arms');
+            const fx = document.getElementById('emotion-fx');
+            wrapper.classList.remove('anim-happy', 'anim-sad');
+            void wrapper.offsetWidth; 
+            
+            if (emotion === 'happy') {
+                arms.innerText = '🙌'; fx.innerText = '✨'; fx.style.opacity = '1';
+                wrapper.classList.add('anim-happy');
+            } else if (emotion === 'sad') {
+                arms.innerText = '💦'; fx.innerText = '💧'; fx.style.opacity = '1';
+                wrapper.classList.add('anim-sad');
+            } else {
+                arms.innerText = '👐'; fx.style.opacity = '0';
+            }
+        }
+
+        // --- Flow Control ---
+        function selectCharacter(char, isInit = false) {
+            selectedCharacter = char;
+            document.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('border-amber-400', 'border-pink-400', 'border-sky-400', 'border-green-400', 'bg-amber-100'));
+            const btn = document.getElementById(`char-${char}`);
+            let col = char==='rabbit'?'border-pink-400':char==='cat'?'border-sky-400':char==='panda'?'border-green-400':'border-amber-400';
+            btn.classList.add(col, 'bg-amber-50');
+            if (!isInit) synth.triggerAttackRelease('G4', '8n');
+        }
+
+        function selectDifficulty(diff, isInit = false) {
+            difficulty = diff;
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.classList.remove('border-green-500', 'border-yellow-500', 'border-red-500', 'scale-105');
+                btn.classList.add('border-transparent');
+            });
+            const btn = document.getElementById(`diff-${diff}`);
+            let col = diff==='medium'?'border-yellow-500':diff==='hard'?'border-red-500':'border-green-500';
+            btn.classList.remove('border-transparent');
+            btn.classList.add(col, 'scale-105');
+            if (!isInit) synth.triggerAttackRelease('A4', '8n');
+
+            const bnRow = document.getElementById('banknotes-row');
+            if (diff === 'easy') { bnRow.classList.add('hidden'); }
+            else if (diff === 'medium') { 
+                bnRow.classList.remove('hidden'); 
+                bnRow.children[0].classList.add('hidden'); bnRow.children[1].classList.add('hidden'); bnRow.children[2].classList.remove('hidden'); 
+            }
+            else { 
+                bnRow.classList.remove('hidden'); 
+                bnRow.children[0].classList.remove('hidden'); bnRow.children[1].classList.remove('hidden'); bnRow.children[2].classList.remove('hidden'); 
+            }
+        }
+
+        function showScreen(id) {
+            ['menu-screen', 'game-screen', 'reward-screen', 'game-over-screen'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function goBackToMenu() { showScreen('menu-screen'); }
+
+        function startGame() {
+            score = 0; hearts = 3; currentLevelRound = 1; trayCoins = [];
+            updateDashboards();
+            generateLevelQuestion();
+            showScreen('game-screen');
+        }
+
+        function updateDashboards() {
+            document.getElementById('score-val').innerText = score;
+            const hc = document.getElementById('hearts-container');
+            hc.innerHTML = '';
+            for (let i = 0; i < 3; i++) hc.innerHTML += i < hearts ? '<span class="text-xl">❤️</span>' : '<span class="text-xl text-gray-300">🖤</span>';
+        }
+
+        // --- Money & Tray Logic ---
+        function addMoney(amount) {
+            // เล่นเสียงเปียโน C Major ตอนหยิบเงิน
+            const note = scale[trayCoins.length % scale.length];
+            pianoSynth.triggerAttackRelease(note, "8n");
+            trayCoins.push(amount);
+            renderTray();
+        }
+
+        function removeCoin(idx) {
+            synth.triggerAttackRelease('C4', '16n');
+            trayCoins.splice(idx, 1);
+            renderTray();
+        }
+
+        function renderTray() {
+            const tray = document.getElementById('payment-tray');
+            const totalDisplay = document.getElementById('tray-total-display');
+
+            if (trayCoins.length === 0) {
+                tray.innerHTML = `<span class="text-gray-400 text-xs md:text-sm text-center">แตะเงินในกระเป๋าเพื่อทอนที่นี่จ้า...</span>`;
+                totalDisplay.innerText = "0 บาท";
+                return;
+            }
+
+            let html = '', total = 0;
+            trayCoins.forEach((val, idx) => {
+                total += val;
+                if (val >= 20) {
+                    html += `<div onclick="removeCoin(${idx})" class="bill-${val} cursor-pointer border-2 rounded-md font-black shadow-sm flex flex-col items-center justify-center leading-none w-14 h-8 md:w-16 md:h-10 text-xs hover:scale-105" title="แตะเพื่อเอากลับคืน"><span class="text-[8px] md:text-[10px] opacity-80">ธนบัตร</span><span>${val}</span></div>`;
+                } else {
+                    html += `<div onclick="removeCoin(${idx})" class="coin-${val} cursor-pointer border-2 rounded-full flex items-center justify-center font-black shadow-sm w-8 h-8 md:w-10 md:h-10 text-xs md:text-sm hover:scale-110" title="แตะเพื่อเอากลับคืน">${val}</div>`;
+                }
+            });
+            tray.innerHTML = html;
+            totalDisplay.innerText = `${total} บาท`;
+        }
+
+        function generateMoneyHTML(amount) {
+            let html = '<div class="flex flex-wrap justify-center items-center gap-1.5">';
+            let remaining = amount;
+            const denoms = [{v:100,c:'bill-100'}, {v:50,c:'bill-50'}, {v:20,c:'bill-20'}, {v:10,c:'coin-10'}, {v:5,c:'coin-5'}, {v:2,c:'coin-2'}, {v:1,c:'coin-1'}];
+            for (let d of denoms) {
+                while (remaining >= d.v) {
+                    if (d.v >= 20) html += `<div class="${d.c} border-2 rounded-md font-black shadow-sm flex flex-col items-center justify-center leading-none w-12 h-8 text-[10px]"><span class="text-[8px] opacity-80">ธนบัตร</span><span>${d.v}</span></div>`;
+                    else html += `<div class="${d.c} border-2 rounded-full flex items-center justify-center font-black shadow-sm w-8 h-8 text-xs">${d.v}</div>`;
+                    remaining -= d.v;
+                }
+            }
+            return html + '</div>';
+        }
+
+        // --- Game Logic (Give Change) ---
+        function generateLevelQuestion() {
+            trayCoins = []; renderTray();
+            updateCharacterVisuals(); playCharacterAnimation('reset');
+
+            let maxPrice = difficulty === 'easy' ? 9 : difficulty === 'medium' ? 49 : 99;
+            
+            // Random item logic based on max price
+            let validItems = ITEMS.filter(i => i.basePrice <= maxPrice);
+            if(validItems.length === 0) validItems = ITEMS; // fallback
+            const chosenItem = validItems[Math.floor(Math.random() * validItems.length)];
+            const price = chosenItem.basePrice;
+
+            // Determine what bill customer pays with
+            let billPaid = 10;
+            if (price >= 10 && price < 20) billPaid = 20;
+            else if (price >= 20 && price < 50) billPaid = 50;
+            else if (price >= 50) billPaid = 100;
+            
+            // Safety check for target amount
+            if (billPaid <= price) billPaid += (difficulty === 'easy' ? 5 : 10);
+
+            targetAmount = billPaid - price; // หยอดเงินทอนให้ถูก
+            let paidDesc = billPaid === 10 ? `เหรียญ 10 บาท` : `แบงก์ ${billPaid} บาท`;
+
+            const shelfContainer = document.getElementById('item-shelf');
+            shelfContainer.innerHTML = `
+                <div class="flex flex-col w-full items-center gap-2">
+                    <div class="bg-white p-2 rounded-2xl border-2 border-amber-200 text-center shadow-sm w-full max-w-[200px] flex flex-col items-center">
+                        <span class="text-5xl block">${chosenItem.emoji}</span>
+                        <div class="text-sm font-bold text-amber-900 mt-1">${chosenItem.name}</div>
+                        <div class="bg-amber-600 text-white font-bold text-xs px-3 py-1 rounded-full mt-1">ราคา ${price} บาท</div>
+                    </div>
+                    <div class="bg-blue-50 text-blue-900 p-2 md:p-3 rounded-xl text-center w-full shadow-inner border-2 border-blue-200 flex flex-col items-center">
+                        <div class="text-xs font-bold text-blue-800 mb-1">ลูกค้าจ่ายเงินมา:</div>
+                        ${generateMoneyHTML(billPaid)}
+                        <div class="mt-2 bg-white rounded-lg py-1.5 px-2 border border-dashed border-blue-300 shadow-sm flex flex-col items-center w-full max-w-[200px]">
+                            <span class="text-[10px] text-blue-500 font-bold mb-1">💡 สมการเงินทอน:</span>
+                            <div class="flex items-center space-x-2 text-xl font-black text-gray-700 w-full justify-center">
+                                <span class="text-blue-600">${billPaid}</span><span class="text-gray-400">-</span>
+                                <span class="text-amber-600">${price}</span><span class="text-gray-400">=</span>
+                                <span class="text-red-500 animate-pulse text-2xl">?</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('speech-bubble').innerText = `ซื้อ ${chosenItem.name} ราคา ${price} บาท จ่าย${paidDesc} ทอนเท่าไหร่เอ่ย?`;
+            currentQuestionText = `ลูกค้าจ่าย${paidDesc} ซื้อของราคา ${price} บาท ต้องทอนเงินกี่บาทดีนะจ๊ะ?`;
+            speak(currentQuestionText);
+        }
+
+        function checkAnswer() {
+            const sum = trayCoins.reduce((a, b) => a + b, 0);
+            if (sum === 0) { speak("หนูยังไม่ได้หยิบเงินทอนใส่ถาดเลยจ้า"); return; }
+
+            if (sum === targetAmount) {
+                // Correct
+                synth.triggerAttackRelease(["C5", "E5", "G5"], "4n");
+                score += 10;
+                playCharacterAnimation('happy');
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                
+                const feedbackText = "ถูกต้องแล้วจ้า! เก่งที่สุดเลยคนดี";
+                document.getElementById('speech-bubble').innerText = `✨ ${feedbackText} ✨`;
+                currentQuestionText = feedbackText; speak(feedbackText);
+
+                currentLevelRound++; updateDashboards();
+                setTimeout(() => {
+                    if (currentLevelRound > ROUNDS_PER_GAME) endGameWithReward();
+                    else generateLevelQuestion();
+                }, 3000);
+            } else {
+                // Wrong -> Auto Clear tray (ดังที่คุณรีเควส)
+                synth.triggerAttackRelease(["F3", "D3"], "4n");
+                hearts--; updateDashboards();
+                playCharacterAnimation('sad');
+                
+                const tray = document.getElementById('payment-tray');
+                tray.classList.add('animate-ping');
+                
+                // ล้างถาดอัตโนมัติเมื่อผิด
+                setTimeout(() => {
+                    tray.classList.remove('animate-ping');
+                    trayCoins = [];
+                    renderTray();
+                }, 1000);
+
+                let cluePhrase = sum < targetAmount ? `ทอนเงินไปยังไม่ครบจ้า ลองใหม่นะ!` : `เงินทอนเกินไปจ้า ลองลดเหรียญดูนะ!`;
+                document.getElementById('speech-bubble').innerText = `😢 ${cluePhrase}`;
+                currentQuestionText = cluePhrase; speak(cluePhrase);
+
+                if (hearts <= 0) {
+                    setTimeout(() => {
+                        showScreen('game-over-screen');
+                        speak("หัวใจหมดแล้ว ไม่เป็นไรจ้า ลองเล่นใหม่อีกครั้งนะ!");
+                    }, 2500);
+                }
+            }
+        }
+
+        function endGameWithReward() {
+            document.getElementById('final-score-val').innerText = `${score}`;
+            showScreen('reward-screen');
+            speak(`เก่งมากๆ เลยจ้า ได้คะแนนตั้ง ${score} คะแนนแหนะ!`);
+            let duration = 3 * 1000, end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+    </script>
+</body>
+</html>
